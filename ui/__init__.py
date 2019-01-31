@@ -26,13 +26,13 @@ from bpy.types import Operator, Panel
 from ..functions import *
 
 
-class SKELETON_PT_interface(Panel):
+class WAX_PT_interface(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_label       = "Skeleton Interface"
-    bl_idname      = "VIEW3D_PT_tools_addon_skeleton"
+    bl_label       = "Wax Dropper Interface"
+    bl_idname      = "VIEW3D_PT_tools_wax_interface"
     bl_context     = "objectmode"
-    bl_category    = "Addon Skeleton"
+    bl_category    = "Wax Dropper"
 
     @classmethod
     def poll(self, context):
@@ -46,11 +46,11 @@ class SKELETON_PT_interface(Panel):
             split = layout.split(align=True, percentage=0.9)
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("scene.report_error", text="Report Error", icon="URL").addon_name = "Addon Skeleton"
+            row.operator("scene.report_error", text="Report Error", icon="URL").addon_name = "Wax Dropper"
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("scene.close_report_error", text="", icon="PANEL_CLOSE").addon_name = "Addon Skeleton"
+            row.operator("scene.close_report_error", text="", icon="PANEL_CLOSE").addon_name = "Wax Dropper"
 
         col = layout.column(align=True)
         col.label(text="Your interface here!")
-        col.operator("skeleton.operator_skeleton")
+        col.operator("wax.operator_skeleton")

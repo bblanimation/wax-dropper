@@ -24,7 +24,7 @@ from bpy.props import *
 from .. import addon_updater_ops
 
 
-class INTERPHYS_PT_preferences(AddonPreferences):
+class WAX_PT_preferences(AddonPreferences):
     bl_idname = __package__[:__package__.index(".lib")]
 
 	# addon updater preferences

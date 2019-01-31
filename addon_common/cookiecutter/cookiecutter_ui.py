@@ -112,6 +112,7 @@ class CookieCutter_UI:
     def header_text_restore(self):
         self.context.area.header_text_set()
 
+    # enum in ['DEFAULT', 'NONE', 'WAIT', 'CROSSHAIR', 'MOVE_X', 'MOVE_Y', 'KNIFE', 'TEXT', 'PAINT_BRUSH', 'HAND', 'SCROLL_X', 'SCROLL_Y', 'SCROLL_XY', 'EYEDROPPER']
     def cursor_modal_set(self, v):
         self.context.window.cursor_modal_set(v)
 
@@ -124,4 +125,3 @@ class CookieCutter_UI:
         self.drawing.space.show_manipulator = True
     def manipulator_restore(self):
         self.drawing.space.show_manipulator = self._manipulator
-        

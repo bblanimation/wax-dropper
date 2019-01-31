@@ -15,11 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ..ui import *
 from .reportError import *
+from .preferences import *
+from ..ui import *
 from ..operators import *
 
 classes = [
-    SKELETON_PT_interface,
-    SKELETON_OT_operator_skeleton,
+    WAX_PT_preferences,
+    WAX_PT_interface,
+    WAX_OT_operator_skeleton,
 ]

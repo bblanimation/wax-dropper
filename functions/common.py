@@ -35,7 +35,6 @@ from mathutils import Vector, Euler, Matrix
 from bpy.types import Object, Scene
 props = bpy.props
 
-
 # https://github.com/CGCookie/retopoflow
 def bversion():
     bversion = '%03d.%03d.%03d' % (bpy.app.version[0], bpy.app.version[1], bpy.app.version[2])
@@ -203,6 +202,23 @@ class Suppressor(object):
         pass
 
 
+def applyModifiers(obj, only=None, exclude=["SMOKE"], curFrame=None):
+    hasArmature = False
+    select(obj, active=True, only=True)
+    # apply modifiers
+    for mod in obj.modifiers:
+        if not (only is None or mod.type in only) or not (exclude is None or mod.type not in exclude) or not mod.show_viewport:
+            continue
+        try:
+            with Suppressor():
+                bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+        except:
+            mod.show_viewport = False
+        if mod.type == "ARMATURE" and not hasArmature and mod.show_viewport:
+            hasArmature = True
+    return hasArmature
+
+
 # code from https://stackoverflow.com/questions/1518522/python-most-common-element-in-a-list
 def most_common(L):
     # get an iterable of (item, iterable) pairs
@@ -301,7 +317,7 @@ def confirmList(itemList):
     return itemList
 
 
-def confirmIter(object, accept_strings=False):
+def confirmIter(object):
     """ if single item passed, convert to list """
     try:
         iter(object)
@@ -313,7 +329,6 @@ def confirmIter(object, accept_strings=False):
 def insertKeyframes(objs, keyframeType, frame, if_needed=False):
     """ insert key frames for given objects to given frames """
     objs = confirmIter(objs)
-    ct = time.time()
     options = set(["INSERTKEY_NEEDED"] if if_needed else [])
     for obj in objs:
         inserted = obj.keyframe_insert(data_path=keyframeType, frame=frame, options=options)
@@ -335,8 +350,7 @@ def setLayers(layers, scn=None):
     assert len(layers) == 20
     scn = scn or bpy.context.scene
     # update scene (prevents dag ZERO errors)
-    if bpy.props.Bricker_developer_mode > 0:
-        scn.update()
+    scn.update()
     # set active layers of scn
     scn.layers = layers
 
@@ -509,10 +523,10 @@ def showErrorMessage(message, wrap=80):
     return
 
 
-def handle_exception(plugin_name="Bricker", report_button_loc="Brick Models"):
-    errormsg = print_exception('%(plugin_name)s_log' % locals())
+def handle_exception(log_name, report_button_loc):
+    errormsg = print_exception(log_name)
     # if max number of exceptions occur within threshold of time, abort!
-    errorStr = "Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the '%(report_button_loc)s' dropdown menu of %(plugin_name)s)" % locals()
+    errorStr = "Something went wrong. Please start an error report with us so we can fix it! ('%(report_button_loc)s')" % locals()
     print('\n'*5)
     print('-'*100)
     print(errorStr)
@@ -615,18 +629,18 @@ def parent_clear(objs, apply_transform=True):
         obj.parent = None
 
 
-def writeErrorToFile(errorReportPath, txtName, addonVersion):
+def writeErrorToFile(error_report_path:str, error_log:str, addon_version:str, github_path:str):
     # write error to log text object
-    if not os.path.exists(errorReportPath):
-        os.makedirs(errorReportPath)
-    fullFilePath = os.path.join(errorReportPath, "Bricker_error_report.txt")
-    f = open(fullFilePath, "w")
-    f.write("\nPlease copy the following form and paste it into a new issue at https://github.com/bblanimation/bricker/issues")
+    error_report_dir = os.path.dirname(error_report_path)
+    if not os.path.exists(error_report_dir):
+        os.makedirs(error_report_dir)
+    f = open(error_report_path, "w")
+    f.write("\nPlease copy the following form and paste it into a new issue at " + github_path)
     f.write("\n\nDon't forget to include a description of your problem! The more information you provide (what you were trying to do, what action directly preceeded the error, etc.), the easier it will be for us to squash the bug.")
     f.write("\n\n### COPY EVERYTHING BELOW THIS LINE ###\n")
     f.write("\nDescription of the Problem:\n")
     f.write("\nBlender Version: " + bversion())
-    f.write("\nAddon Version: " + addonVersion)
+    f.write("\nAddon Version: " + addon_version)
     f.write("\nPlatform Info:")
     f.write("\n   system   = " + platform.system())
     f.write("\n   platform = " + platform.platform())
@@ -634,11 +648,11 @@ def writeErrorToFile(errorReportPath, txtName, addonVersion):
     f.write("\n   python   = " + platform.python_version())
     f.write("\nError:")
     try:
-        f.write("\n" + bpy.data.texts[txtName].as_string())
+        f.write("\n" + error_log)
     except KeyError:
         f.write(" No exception found")
 
-        
+
 def root_path():
     return os.path.abspath(os.sep)
 
@@ -653,3 +667,8 @@ def splitpath(path):
             if path != "": folders.append(path)
             break
     return folders[::-1]
+
+def apply_modifiers(obj, settings="PREVIEW"):
+    m = obj.to_mesh(bpy.context.scene, True, "PREVIEW")
+    obj.modifiers.clear()
+    obj.data = m
