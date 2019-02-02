@@ -23,5 +23,5 @@ from ..operators import *
 classes = [
     WAX_PT_preferences,
     WAX_PT_interface,
-    WAX_OT_operator_skeleton,
+    WAX_OT_wax_drop,
 ]

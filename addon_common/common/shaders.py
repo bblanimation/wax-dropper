@@ -336,5 +336,3 @@ def circleShaderStart(shader):
 def circleShaderEnd(shader):
     bgl.glDisable(bgl.GL_POINT_SPRITE)
 circleShader = Shader.load_from_file('circleShader', 'circle.glsl', checkErrors=False, funcStart=circleShaderStart, funcEnd=circleShaderEnd)
-
-

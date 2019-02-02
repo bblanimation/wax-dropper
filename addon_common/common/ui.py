@@ -2667,7 +2667,3 @@ class UI_WindowManager:
             self.set_tooltip_label(None)
 
         return ret
-
-
-
-

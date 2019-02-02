@@ -52,5 +52,4 @@ class WAX_PT_interface(Panel):
             row.operator("scene.close_report_error", text="", icon="PANEL_CLOSE").addon_name = "Wax Dropper"
 
         col = layout.column(align=True)
-        col.label(text="Your interface here!")
-        col.operator("wax.operator_skeleton")
+        col.operator("wax.wax_drop")
