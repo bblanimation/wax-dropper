@@ -43,14 +43,14 @@ class WaxDrop_UI_Init():
             return self._state
         def mode_setter(m):
             self.fsm_change(m)
-        def mode_change():
-            nonlocal precut_container, segmentation_container, paint_radius
-            m = self._state
-            precut_container.visible = (m in {'spline', 'seed', 'region'})
-            paint_radius.visible = (m in {'region'})
-            no_options.visible = not (m in {'region'})
-            segmentation_container.visible = (m in {'segmentation'})
-        self.fsm_change_callback(mode_change)
+        #def mode_change():
+        #    nonlocal segmentation_container, paint_radius
+        #    m = self._state
+        #    precut_container.visible = (m in {'spline', 'seed', 'region'})
+        #    paint_radius.visible = (m in {'region'})
+        #    no_options.visible = not (m in {'region'})
+        #    segmentation_container.visible = (m in {'segmentation'})
+        #self.fsm_change_callback(mode_change)
 
         def radius_getter():
             return self.brush_radius
