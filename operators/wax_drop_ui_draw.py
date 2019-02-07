@@ -106,37 +106,38 @@ class WaxDrop_UI_Draw():
         # skip the rest of the drawing if user is navigating or doing stuff with ui
         if self._nav: return
 
-        if self.net_ui_context.hovered_near[0] in {'NON_MAN_ED', 'NON_MAN_VERT'}:
+        #if self.net_ui_context.hovered_near[0] in {'NON_MAN_ED', 'NON_MAN_VERT'}:
             # draw non-manifold circle
-            loc = self.net_ui_context.hovered_near[1][1]
-            self.draw_circle(loc, 10, .7, green_trans, clear)
+        #    loc = self.net_ui_context.hovered_near[1][1]
+        #    self.draw_circle(loc, 10, .7, green_trans, clear)
 
         #INSERT POINT HINT
-        if self.net_ui_context.hovered_near[0] in {'EDGE'}:
+        #if self.net_ui_context.hovered_near[0] in {'EDGE'}:
             # draw insertion circle
-            loc = self.net_ui_context.hovered_mesh['world loc']
-            self.draw_circle(loc, 10, .7, green_trans, clear)
+        #    loc = self.net_ui_context.hovered_mesh['world loc']
+        #    self.draw_circle(loc, 10, .7, green_trans, clear)
 
 
-        if self.net_ui_context.hovered_near[0] in {'POINT'}:
+        #if self.net_ui_context.hovered_near[0] in {'POINT'}:
             # draw selection circle
-            loc = self.net_ui_context.hovered_near[1].world_loc
-            self.draw_circle(loc, 12, .7, green_trans, clear)
+        #    loc = self.net_ui_context.hovered_near[1].world_loc
+        #    self.draw_circle(loc, 12, .7, green_trans, clear)
 
-        if self.net_ui_context.snap_element:
+        #if self.net_ui_context.snap_element:
             # draw snap/sketch circle
-            loc = self.net_ui_context.snap_element.world_loc
-            self.draw_circle(loc, 24, .7, green_trans, clear)
+        #    loc = self.net_ui_context.snap_element.world_loc
+        #    self.draw_circle(loc, 24, .7, green_trans, clear)
 
         # draw region paint brush
-        if self._state == 'region':
-            self.brush.draw_postview(self.context, self.actions.mouse)
+        if self._state == 'paint' or self.actions.alt:
+            if self.brush:
+                self.brush.draw_postview(self.context, self.actions.mouse)
 
     @CookieCutter.Draw('post2d')
     def draw_postpixel(self):
         self.draw_2D_stuff()
         # if self.sketcher.has_locs:
-        if self._state == 'spline' and self.spline_fsm.state == 'sketch':
+        if self._state == 'sketch':
             draw2d_polyline(self.sketcher.get_locs(), (0.0, 1.0, 0.0, 0.4), 2)
 
 

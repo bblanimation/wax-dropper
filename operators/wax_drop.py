@@ -42,7 +42,10 @@ class WaxDropperOptions:
     defaults = {
         "action": "add",
         "blob_size": 1.0,
+        "paint_radius":2.0,
         "position": 9,
+        "resolution":0.4,
+        "surface_target": "object",  #object, object_wax
     }
 
 
@@ -89,10 +92,12 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
         # hide other objects
         hide([obj for obj in scn.objects if obj != self.source])
 
-        # make wax and meta objects
-        self.wax_obj, self.meta_obj = self.make_wax_base()
         # get options for UI box
         self.wax_opts = WaxDropperOptions()
+
+        # make wax and meta objects
+        self.wax_obj, self.meta_obj = self.make_wax_base()
+
 
         destructive = "DESTRUCTIVE" # or "NON-DESTRUCTIVE"
         self.net_ui_context = self.NetworkUIContext(self.context, geometry_mode=destructive)
@@ -103,14 +108,34 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
         self.sketcher = self.SketchManager(self.input_net, self.spline_net, self.net_ui_context, self.network_cutter)
 
         self.brush = None
-        self.brush_radius = 1.5
+        self.brush_radius = self.wax_opts["paint_radius"]
 
         # UI Box functionality
         def get_blobsize(): return self.wax_opts["blob_size"]
         def get_blobsize_print(): return "%0.3f" % self.wax_opts["blob_size"]
-        def set_blobsize(v): self.wax_opts["blob_size"] = max(0.001, float(v))
+        def set_blobsize(v): self.wax_opts["blob_size"] = min(max(0.001, float(v)),8.0)
+
+        def get_radius(): return self.wax_opts["paint_radius"]
+        def get_radius_print(): return "%0.3f" % self.wax_opts["paint_radius"]
+        def set_radius(v):
+            self.wax_opts["paint_radius"] = max(0.1, int(v*10)/10)
+            if self.brush:
+                print("setting bursh radius")
+                self.brush.radius = self.wax_opts["paint_radius"]
+                self.brush_density()
+
+        def get_resolution(): return self.wax_opts["resolution"]
+        def get_resolution_print(): return "%0.3f" % self.wax_opts["resolution"]
+        def set_resolution(v):
+            self.wax_opts["resolution"] = min(max(0.05, float(v)), 2.0)
+            self.meta_obj.data.resolution = self.wax_opts["resolution"]
+            self.push_meta_to_wax()
         def get_action(): return self.wax_opts["action"]
         def set_action(v): self.wax_opts["action"] = v
+
+        def get_surface_target(): return self.wax_opts["surface_target"]
+        def set_surface_target(v): self.wax_opts["surface_target"] = v
+
         def fn_get_pos_wrap(v):
             if type(v) is int: return v
             return Point2D(v)
@@ -118,21 +143,30 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             if type(v) is int: return v
             return tuple(v)
         fn_pos = self.wax_opts.gettersetter("position", fn_get_wrap=fn_get_pos_wrap, fn_set_wrap=fn_set_pos_wrap)
-        # UI Box elements
-        win = self.wm.create_window("Wax Dropper", {"fn_pos":fn_pos, "movable":True})
-        help = win.add(ui.UI_Frame("Help"))
-        help.add(ui.UI_WrappedLabel("LEFT MOUSE to place wax"))
-        help.add(ui.UI_WrappedLabel("RIGHT MOUSE to remove wax"))
-        help.add(ui.UI_WrappedLabel("SHIFT+LEFT MOUSE to sketch"))
-        help.add(ui.UI_WrappedLabel("ALT+LEFT MOUSE to paint"))
-        help.add(ui.UI_WrappedLabel("ENTER to finish"))
-        help.add(ui.UI_WrappedLabel("ESC to cancel"))
-        opts = win.add(ui.UI_Frame("Options"))
-        opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
-        action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
-        action.add_option("add")
-        action.add_option("subtract")
-        action.add_option("none")
+        self.ui_setup()
+        # # UI Box elements
+        # win = self.wm.create_window("Wax Dropper", {"fn_pos":fn_pos, "movable":True})
+        # help = win.add(ui.UI_Frame("Help"))
+        # help.add(ui.UI_WrappedLabel("LEFT MOUSE to place wax"))
+        # help.add(ui.UI_WrappedLabel("RIGHT MOUSE to remove wax"))
+        # help.add(ui.UI_WrappedLabel("SHIFT+LEFT MOUSE to sketch"))
+        # help.add(ui.UI_WrappedLabel("ALT+LEFT MOUSE to paint"))
+        # help.add(ui.UI_WrappedLabel("ENTER to finish"))
+        # help.add(ui.UI_WrappedLabel("ESC to cancel"))
+        # opts = win.add(ui.UI_Frame("Options"))
+        # opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
+        # opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
+        # opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
+        # action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
+        # action.add_option("add")
+        # action.add_option("subtract")
+        # action.add_option("none")
+        #
+        # surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
+        # surface.add_option("object")
+        # surface.add_option("wax on wax")
+        # surface.add_option("scene")
+
 
     def end_commit(self):
         """ Commit changes to mesh! """
@@ -178,7 +212,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
         if self.actions.pressed("sketch"):
             return "sketch"
 
-        if self.actions.pressed("paint"):
+        if self.actions.pressed("paint") or self.actions.alt:
             return "paint"
 
         if self.actions.pressed("commit"):
@@ -237,7 +271,10 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
 
     @CookieCutter.FSM_State('paint', 'enter')
     def region_paint_enter(self):
-        self.brush = self.PaintBrush(self.net_ui_context, radius=self.brush_radius)
+        self.brush = self.PaintBrush(self.net_ui_context, radius=self.wax_opts["paint_radius"])
+        self.brush_density()
+        print('enter paint')
+        print(self.brush.radius)
         #set the cursor to to something
         # self.network_cutter.find_boundary_faces_cycles()
         self.click_enter_paint()
@@ -249,7 +286,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
     def region_paint(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
-        if self.actions.released('paint'):
+        if self.actions.released('paint') or self.actions.alt == False:
             return 'main'
 
         loc,_,_ = self.brush.ray_hit(self.actions.mouse, self.context)
@@ -327,7 +364,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
         else:
             meta_data = bpy.data.metaballs.new('Meta Wax')
             meta_obj = bpy.data.objects.new('Meta Wax', meta_data)
-            meta_data.resolution = 0.4
+            meta_data.resolution = self.wax_opts['resolution']
             meta_data.render_resolution = 1
             scn.objects.link(meta_obj)
         if 'Wax Blobs' not in bpy.data.objects:
@@ -386,6 +423,12 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             mb.use_negative = self.event.type == "RIGHTMOUSE"
         self.push_meta_to_wax()
 
+
+    def brush_density(self):
+        density = 1/(.5 * self.wax_opts["blob_size"])**2
+        nps = self.brush.calc_npoints(density)
+        self.brush.generate_spiral_points(nps)
+
     def remove_meta_wax(self):
         # remove meta wax object
         meta_obj = bpy.data.objects.get('Meta Wax')
@@ -405,7 +448,9 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
     def push_meta_to_wax(self):
         scn = bpy.context.scene
         scn.update()
+        old_data = self.wax_obj.data
         self.wax_obj.data = self.meta_obj.to_mesh(scn, apply_modifiers=True, settings='PREVIEW')
+        bpy.data.meshes.remove(old_data)
 
     def ray_cast_source(self, p2d, in_world=True):
         context = self.context
