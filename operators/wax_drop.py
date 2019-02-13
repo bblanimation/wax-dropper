@@ -261,6 +261,17 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             self.sketching_end = self.net_ui_context.hovered_near[1] if self.net_ui_context.hovered_near[0] in {'POINT', 'POINT CONNECT'} else None
             self.sketcher.finalize(self.context, self.sketching_start, self.sketching_end)
         self.sketcher.reset()
+        # TODO: Simplify sketch
+        # sketch_3d[ind]
+        # sketch_3d[0] > sketch_3d[3] by certain step to place metaballs
+        # Use 'space_evenly_on_path', pass verts, not cyclic, segments = 'get_path_length'/step size
+        # This returns evenly spaced verts
+        self.sketcher.simplify()
+        # TODO: Evenly tessellated sketch
+        self.sketcher.tessellate_uniform()
+        # TODO: Draw metaballs on the sketch
+        # travel along the curve (or interpolate between points along curve)
+        # add metaballs in uniform distance
 
     #--------------------------------------
     # paint
@@ -297,6 +308,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             #self.brush.absorb_geom(self.context, self.actions.mouse)
             self.paint_dirty = True
             # TODO: actually paint the particles
+            # snap using bvh.find_nearest or 'Object.closest_point_on_mesh' (https://docs.blender.org/api/2.79/bpy.types.Object.html)
 
         if self.paint_dirty and (time.time() - self.last_update) > 0.2:
             self.paint_dirty = False
@@ -306,40 +318,65 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
     def region_paint_exit(self):
         # TODO: finish the particle painting
         pass
+    
+    # #--------------------------------------
+    # # paint delete
+    #
+    # @CookieCutter.FSM_State('paint delete', 'enter')
+    # def region_unpaint_enter(self):
+    #     #set the cursor to to something
+    #     # self.network_cutter.find_boundary_faces_cycles()
+    #     self.click_enter_paint(delete = True)
+    #     self.last_loc = None
+    #     self.last_update = 0
+    #     self.paint_dirty = False
+    #
+    # @CookieCutter.FSM_State('paint delete')
+    # def region_unpaint(self):
+    #     self.cursor_modal_set('PAINT_BRUSH')
+    #
+    #     if self.actions.released('RIGHTMOUSE'):
+    #         return 'main'
+    #
+    #     loc,_,_ = self.brush.ray_hit(self.actions.mouse, self.context)
+    #     if loc and (not self.last_loc or (self.last_loc - loc).length > self.brush.radius*(0.25)):
+    #         self.last_loc = loc
+    #         #self.brush.absorb_geom(self.context, self.actions.mouse)
+    #         self.paint_dirty = True
+    #         # TODO: actually remove the particles
+    #
+    #     if self.paint_dirty and (time.time() - self.last_update) > 0.2:
+    #         self.paint_dirty = False
+    #         self.last_update = time.time()
+    #
+    # @CookieCutter.FSM_State('paint delete', 'exit')
+    # def region_unpaint_exit(self):
+    #     # TODO: finish removing the particles
+    #     pass
 
     #--------------------------------------
-    # paint delete
+    # paint wait
 
-    @CookieCutter.FSM_State('paint delete', 'enter')
-    def region_unpaint_enter(self):
-        #set the cursor to to something
-        # self.network_cutter.find_boundary_faces_cycles()
-        self.click_enter_paint(delete = True)
-        self.last_loc = None
-        self.last_update = 0
-        self.paint_dirty = False
+    @CookieCutter.FSM_State('paint wait', 'can enter')
+    def region_paint_can_enter(self):
+        return True
 
-    @CookieCutter.FSM_State('paint delete')
-    def region_unpaint(self):
+    @CookieCutter.FSM_State('paint wait', 'enter')
+    def region_paint_enter(self):
+        pass
+
+    @CookieCutter.FSM_State('paint wait')
+    def region_paint(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
-        if self.actions.released('RIGHTMOUSE'):
+        if self.actions.released('paint wait') or self.actions.alt == False:
             return 'main'
 
-        loc,_,_ = self.brush.ray_hit(self.actions.mouse, self.context)
-        if loc and (not self.last_loc or (self.last_loc - loc).length > self.brush.radius*(0.25)):
-            self.last_loc = loc
-            #self.brush.absorb_geom(self.context, self.actions.mouse)
-            self.paint_dirty = True
-            # TODO: actually remove the particles
+        pass
 
-        if self.paint_dirty and (time.time() - self.last_update) > 0.2:
-            self.paint_dirty = False
-            self.last_update = time.time()
-
-    @CookieCutter.FSM_State('paint delete', 'exit')
-    def region_unpaint_exit(self):
-        # TODO: finish removing the particles
+    @CookieCutter.FSM_State('paint wait', 'exit')
+    def region_paint_exit(self):
+        # TODO: finish the particle painting
         pass
 
 

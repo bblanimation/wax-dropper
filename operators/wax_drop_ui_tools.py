@@ -114,7 +114,7 @@ class WaxDrop_UI_Tools():
                             sketch_3d += [self.net_ui_context.mx * loc]
                             other_data += [(loc, view_vector, face_ind)]
 
-                feature_inds = simplify_RDP(sketch_3d, .25)  #TODO, sketch threshold
+                feature_inds = simplify_RDP(sketch_3d, .25)  #TODO, 0.25 sketch threshold as parameter
 
                 new_points = []
                 new_segs = []
@@ -189,32 +189,32 @@ class WaxDrop_UI_Tools():
             self.vcol = vcol_layer
             self.points = [(math.cos(math.radians(t)), math.sin(math.radians(t))) for t in range(0,361,10)]
             self.spiral_points = []
-            
-        
+
+
         def calc_npoints(self, density):
             '''
             density in points/mm^2
             '''
-            
+
             area = math.pi * self.radius**2
             npoints = round(area*density)
             npoints = max(min(1000, npoints), 16)
-            
+
             return npoints
-            
+
         def generate_spiral_points(self, npoints):
-            
+
             n = npoints
- 
- 
+
+
             golden_angle = math.pi * (3 - math.sqrt(5))
- 
+
             points = []
             for i in range(n):
                 theta = i * golden_angle
                 r = math.sqrt(i) / math.sqrt(n)
                 points.append((r * math.cos(theta), r * math.sin(theta)))
-            
+
             #Using numpy, one can use vector operations like this
             #radius = numpy.sqrt(numpy.arange(n) / float(n))
             #golden_angle = numpy.pi * (3 - numpy.sqrt(5))
@@ -225,7 +225,7 @@ class WaxDrop_UI_Tools():
             #points *= radius.reshape((n, 1))
 
             self.spiral_points = points
-            
+
         def ray_hit(self, pt_screen, context):
             view_vector, ray_origin, ray_target = get_view_ray_data(context, pt_screen)  #a location and direction in WORLD coordinates
             return ray_cast_bvh(self.net_ui_context.bvh, self.net_ui_context.imx, ray_origin, ray_target, None)
@@ -306,12 +306,12 @@ class WaxDrop_UI_Tools():
             bgl.glColor4f(1, 1, 1, 0.25)    # center point
             bgl.glBegin(bgl.GL_POINTS)
             bgl.glVertex3f(*loc)
-            
-            
+
+
             for mx, my in self.spiral_points:  #spiral cluster
                 p = loc + (tx * mx + ty * my) * self.radius
-                bgl.glVertex3f(*p)    
-                
+                bgl.glVertex3f(*p)
+
             bgl.glEnd()
 
             ######################################

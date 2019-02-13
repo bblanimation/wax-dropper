@@ -801,7 +801,7 @@ class NetworkCutter(object):
             for seg in new_segs:
                 seg.calc_bezier()
                 seg.tessellate()
-                seg.tessellate_IP_error(.1)
+                # seg.tessellate_IP_error(.1)
 
         #This happens OUTSIDE of this function at the UITools level...so the patch
         #does not know about it's DiscreteNetwork/InputNetwork elements yet
