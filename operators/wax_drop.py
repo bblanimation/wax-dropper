@@ -80,6 +80,9 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
         """ initialization function """
         bpy.ops.ed.undo_push()  # push current state to undo
 
+        # get all options for UI box
+        self.wax_opts = WaxDropperOptions()
+        
         # initialize vars
         scn = bpy.context.scene
 
@@ -95,8 +98,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
 
         # make wax and meta objects
         self.wax_obj, self.meta_obj = self.make_wax_base()
-        # get options for UI box
-        self.wax_opts = WaxDropperOptions()
+        
         
         # make wax and meta objects
         self.wax_obj, self.meta_obj = self.make_wax_base()
@@ -113,34 +115,6 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
 
         self.brush = None
         self.brush_radius = self.wax_opts["paint_radius"]
-
-        # UI Box functionality
-        def get_blobsize(): return self.wax_opts["blob_size"]
-        def get_blobsize_print(): return "%0.3f" % self.wax_opts["blob_size"]
-        def set_blobsize(v): self.wax_opts["blob_size"] = min(max(0.001, float(v)),8.0)
-        
-        def get_radius(): return self.wax_opts["paint_radius"]
-        def get_radius_print(): return "%0.3f" % self.wax_opts["paint_radius"]
-        def set_radius(v):
-            self.wax_opts["paint_radius"] = max(0.1, int(v*10)/10)
-            if self.brush:
-                print("setting bursh radius")
-                self.brush.radius = self.wax_opts["paint_radius"]
-                self.brush_density()
-            
-        
-        def get_resolution(): return self.wax_opts["resolution"]
-        def get_resolution_print(): return "%0.3f" % self.wax_opts["resolution"]
-        def set_resolution(v): 
-            self.wax_opts["resolution"] = min(max(0.05, float(v)), 2.0)
-            self.meta_obj.data.resolution = self.wax_opts["resolution"]
-            self.push_meta_to_wax()
-        def get_action(): return self.wax_opts["action"]
-        def set_action(v): self.wax_opts["action"] = v
-        
-        
-        def get_surface_target(): return self.wax_opts["surface_target"]
-        def set_surface_target(v): self.wax_opts["surface_target"] = v
         
         def fn_get_pos_wrap(v):
             if type(v) is int: return v
@@ -149,62 +123,11 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             if type(v) is int: return v
             return tuple(v)
         fn_pos = self.wax_opts.gettersetter("position", fn_get_wrap=fn_get_pos_wrap, fn_set_wrap=fn_set_pos_wrap)
+        
+        
         self.ui_setup()
 
-        # # UI Box functionality
-        # def get_blobsize(): return self.wax_opts["blob_size"]
-        # def get_blobsize_print(): return "%0.3f" % self.wax_opts["blob_size"]
-        # def set_blobsize(v): self.wax_opts["blob_size"] = min(max(0.001, float(v)),8.0)
-        #
-        # def get_radius(): return self.wax_opts["paint_radius"]
-        # def get_radius_print(): return "%0.3f" % self.wax_opts["paint_radius"]
-        # def set_radius(v):
-        #     self.wax_opts["paint_radius"] = max(0.1, int(v*10)/10)
-        opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
-        opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
-        #         self.brush.radius = self.wax_opts["paint_radius"]
-        #         self.brush_density()
-        #
-        # def get_resolution(): return self.wax_opts["resolution"]
-        # def get_resolution_print(): return "%0.3f" % self.wax_opts["resolution"]
-        # def set_resolution(v):
-        #     self.wax_opts["resolution"] = min(max(0.05, float(v)), 2.0)
-        #     self.meta_obj.data.resolution = self.wax_opts["resolution"]
-        #     self.push_meta_to_wax()
-        # def get_action(): return self.wax_opts["action"]
-        # def set_action(v): self.wax_opts["action"] = v
-        #
-        # def get_surface_target(): return self.wax_opts["surface_target"]
-        # def set_surface_target(v): self.wax_opts["surface_target"] = v
-
-        # # UI Box elements
-        # win = self.wm.create_window("Wax Dropper", {"fn_pos":fn_pos, "movable":True})
-        # help = win.add(ui.UI_Frame("Help"))
-        # help.add(ui.UI_WrappedLabel("LEFT MOUSE to place wax"))
-        # help.add(ui.UI_WrappedLabel("RIGHT MOUSE to remove wax"))
-        # help.add(ui.UI_WrappedLabel("SHIFT+LEFT MOUSE to sketch"))
-        # help.add(ui.UI_WrappedLabel("ALT+LEFT MOUSE to paint"))
-        # help.add(ui.UI_WrappedLabel("ENTER to finish"))
-        # help.add(ui.UI_WrappedLabel("ESC to cancel"))
-        # opts = win.add(ui.UI_Frame("Options"))
-        # opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
-        # opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
-        # opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
-        # action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
-        # action.add_option("add")
-        # action.add_option("subtract")
-        # action.add_option("none")
-        #
-        # surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
-        # surface.add_option("object")
-        # surface.add_option("wax on wax")
-        # surface.add_option("scene")
-
         
-        surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
-        surface.add_option("object")
-        surface.add_option("wax on wax")
-        surface.add_option("scene")
         
 
     def end_commit(self):
@@ -394,35 +317,35 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
     #--------------------------------------
     # paint wait
 
-    @CookieCutter.FSM_State('paint wait', 'can enter')
-    def region_paint_can_enter(self):
-        return True
-    @CookieCutter.FSM_State('paint delete', 'enter')
-    def region_unpaint_enter(self):
+    #@CookieCutter.FSM_State('paint wait', 'can enter')
+    #def region_paint_can_enter(self):
+    #    return True
+    #@CookieCutter.FSM_State('paint delete', 'enter')
+    #def region_unpaint_enter(self):
         #set the cursor to to something
         # self.network_cutter.find_boundary_faces_cycles()
-        self.click_enter_paint(delete = True)
-        self.last_loc = None
-        self.last_update = 0
-        self.paint_dirty = False
+    #    self.click_enter_paint(delete = True)
+    #    self.last_loc = None
+    #    self.last_update = 0
+    #    self.paint_dirty = False
 
-    @CookieCutter.FSM_State('paint wait', 'enter')
-    def region_paint_enter(self):
-        pass
+    #@CookieCutter.FSM_State('paint wait', 'enter')
+    #def region_paint_enter(self):
+    #    pass
 
-    @CookieCutter.FSM_State('paint wait')
-    def region_paint(self):
-        self.cursor_modal_set('PAINT_BRUSH')
+    #@CookieCutter.FSM_State('paint wait')
+    #def region_paint(self):
+    #    self.cursor_modal_set('PAINT_BRUSH')
 
-        if self.actions.released('paint wait') or self.actions.alt == False:
-            return 'main'
+    #    if self.actions.released('paint wait') or self.actions.alt == False:
+    #        return 'main'
 
-        pass
+    #    pass
 
-    @CookieCutter.FSM_State('paint wait', 'exit')
-    def region_paint_exit(self):
+    #@CookieCutter.FSM_State('paint wait', 'exit')
+    #def region_paint_exit(self):
         # TODO: finish the particle painting
-        pass
+    #    pass
 
 
     ###################################################

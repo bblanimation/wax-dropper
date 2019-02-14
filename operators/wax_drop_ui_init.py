@@ -104,6 +104,7 @@ class WaxDrop_UI_Init():
         opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
         opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
         opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
+        
         action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
         action.add_option("add")
         action.add_option("subtract")
