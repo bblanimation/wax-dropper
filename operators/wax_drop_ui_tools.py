@@ -1,8 +1,20 @@
-'''
-Created on Oct 10, 2015
+# Copyright (C) 2018 Christopher Gearhart
+# chris@bblanimation.com
+# http://bblanimation.com/
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-@author: Patrick
-'''
 import time
 import math
 import numpy
@@ -20,7 +32,7 @@ from ..functions.bmesh import edge_loops_from_bmedges_old, ensure_lookup, new_bm
 from ..functions.geodesic import geodesic_walk
 from ..functions.simplify import simplify_RDP
 from ..addon_common.common.utils import get_matrices
-from ..addon_common.common.maths import Point, Direction, XForm
+from ..addon_common.common.maths import Point, Direction, XForm, space_evenly_on_path, get_path_length
 from ..addon_common.common.bezier import CubicBezierSpline
 
 class WaxDrop_UI_Tools():
@@ -66,6 +78,28 @@ class WaxDrop_UI_Tools():
             if len(self.sketch) < 5 and self.net_ui_context.ui_type == 'DENSE_POLY': return False
             return True
 
+        def finalize_uniform(self, context, step_size:float=0.5, error_threshold:float=0.25):
+            """ finalizes sketch data uniformly """
+            # get 3d points on mesh from screen-space sketch
+            sketch_3d = []
+            for pt in self.sketch:
+                view_vector, ray_origin, ray_target = get_view_ray_data(context, pt)  # location and direction in WORLD coordinates
+                loc, no, face_idx = ray_cast_bvh(self.net_ui_context.bvh, self.net_ui_context.imx, ray_origin, ray_target, None)
+                if face_idx != None:
+                        sketch_3d += [self.net_ui_context.mx * loc]
+
+            # slice over sketch_3d to get simplified points
+            important_idxs = simplify_RDP(sketch_3d, error_threshold)
+
+            # get important locations from important indices in sketch_3d
+            locs = [loc for i,loc in enumerate(sketch_3d) if i in important_idxs]  # TODO: make this list initialization more efficient
+
+            # get evenly spaced group of points along path of important locations
+            new_locs = space_evenly_on_path(locs, segments=int(get_path_length(locs)//step_size))
+
+            # returns evenly spaced locs along sketch
+            return new_locs
+
         def finalize(self, context, start_pnt, end_pnt=None):
             ''' takes sketch data and adds it into the data structures '''
 
@@ -108,12 +142,13 @@ class WaxDrop_UI_Tools():
                 other_data = []
                 for pt in self.sketch:
                     view_vector, ray_origin, ray_target = get_view_ray_data(context, pt)  #a location and direction in WORLD coordinates
-                        #loc, no, face_ind =  ray_cast(self.net_ui_context.ob,self.net_ui_context.imx, ray_origin, ray_target, None)  #intersects that ray with the geometry
+                    # loc, no, face_ind =  ray_cast(self.net_ui_context.ob,self.net_ui_context.imx, ray_origin, ray_target, None)  #intersects that ray with the geometry
                     loc, no, face_ind =  ray_cast_bvh(self.net_ui_context.bvh,self.net_ui_context.imx, ray_origin, ray_target, None)
                     if face_ind != None:
                             sketch_3d += [self.net_ui_context.mx * loc]
                             other_data += [(loc, view_vector, face_ind)]
 
+                # slice over sketch_3d to get simplified points
                 feature_inds = simplify_RDP(sketch_3d, .25)  #TODO, 0.25 sketch threshold as parameter
 
                 new_points = []
@@ -132,8 +167,8 @@ class WaxDrop_UI_Tools():
                         seg = SplineSegment(prev_pnt,new_pnt)
                         self.spline_net.segments.append(seg)
                         new_segs += [seg]
-                        #self.network_cutter.precompute_cut(seg)
-                        #seg.make_path(self.net_ui_context.bme, self.input_net.bvh, self.net_ui_context.mx, self.net_ui_context.imx)
+                        # self.network_cutter.precompute_cut(seg)
+                        # seg.make_path(self.net_ui_context.bme, self.input_net.bvh, self.net_ui_context.mx, self.net_ui_context.imx)
                     prev_pnt = new_pnt
                 if end_pnt:
                     seg = SplineSegment(prev_pnt,end_pnt)

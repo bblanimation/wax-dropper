@@ -1,14 +1,28 @@
-'''
-Created on Oct 11, 2015
+# Copyright (C) 2018 Christopher Gearhart
+# chris@bblanimation.com
+# http://bblanimation.com/
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-@author: Patrick
-'''
-
+# System imports
 import time
 import random
 
+# Blender imports
 from bpy_extras import view3d_utils
 
+# Addon imports
 from .wax_drop_datastructure import InputPoint, SplineSegment, CurveNode
 from ..addon_common.cookiecutter.cookiecutter import CookieCutter
 from ..addon_common.common import ui
@@ -47,9 +61,10 @@ class WaxDrop_UI_Init():
         # instructions
         self.instructions = {
             "place wax": "Left-click on the mesh to add a new wax ball",
-            "remove wax": "Right-click on the mesh to remove a wax ball",
-            "sketch": "Hold shift + left-click and drag to sketch in a series of wax balls",
-            "paint": "Left-click to paint",
+            "sketch": "Hold left-click and drag to sketch in a series of wax balls",
+            "remove wax": "Shift + left-click on the mesh to remove a wax ball",
+            # "remove wax series": "Shift + Right-click on the mesh to remove a series of connected wax balls",
+            "paint": "Hold Alt + left-click and drag to paint",
         }
 
         def mode_getter():
@@ -82,7 +97,7 @@ class WaxDrop_UI_Init():
         #     self.net_ui_context.bme.to_mesh(self.net_ui_context.ob.data)
         #     self.fsm_change('segmentation')
 
-        win_tools = self.wm.create_window('Polytrim Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
+        win_tools = self.wm.create_window('Wax Dropper Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
 
         precut_container = win_tools.add(ui.UI_Container()) # TODO: make this rounded
 
@@ -95,7 +110,7 @@ class WaxDrop_UI_Init():
         container.add(ui.UI_Button('Commit', self.done, align=0))
         container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 
-        info = self.wm.create_window('Polytrim Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
+        info = self.wm.create_window('Wax Dropper Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
         #info.add(ui.UI_Label('Instructions', align=0, margin=4))
         self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(4)]
         #for i in self.inst_paragraphs: i.visible = False
@@ -148,8 +163,8 @@ class WaxDrop_UI_Init():
         ''' sets the viewports text when no points are out '''
         self.reset_ui_text()
         self.inst_paragraphs[0].set_markdown('A) ' + self.instructions['place wax'])
-        self.inst_paragraphs[1].set_markdown('B) ' + self.instructions['remove wax'])
-        self.inst_paragraphs[2].set_markdown('C) ' + self.instructions['sketch'])
+        self.inst_paragraphs[1].set_markdown('B) ' + self.instructions['sketch'])
+        self.inst_paragraphs[2].set_markdown('C) ' + self.instructions['remove wax'])
         self.inst_paragraphs[3].set_markdown('D) ' + self.instructions['paint'])
 
     def set_ui_text_1_point(self):

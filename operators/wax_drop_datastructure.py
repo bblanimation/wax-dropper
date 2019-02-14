@@ -1,22 +1,26 @@
-'''
-Created on Oct 8, 2015
+# Copyright (C) 2015 Patrick Moore
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-@author: Patrick,
-
-#TODO Micah Needs to add email and stuff in here
-License, copyright all that
-This code has an ineresting peidgree
-Inspired by contours Patrick Moore for CGCookie
-Improved by using some PolyStrips concepts Jon Denning @CGCookie and Taylor University
-refreshed again as part of summer practicum by Micah Stewart Summer 2018, Taylor University + Impulse Dental Technologies LLC
-reworked again by Patrick Moore, Micah Stewart and Jon Denning Fall 2018
-'''
+# System imports
 import time
 import math
 import random
 from collections import defaultdict
 from concurrent.futures.thread import ThreadPoolExecutor
 
+# Blender imports
 import bpy
 import bmesh
 import bgl
@@ -25,6 +29,7 @@ from mathutils.bvhtree import BVHTree
 from mathutils.geometry import intersect_point_line, intersect_line_plane
 from bpy_extras import view3d_utils
 
+# Addon imports
 from ..functions import common_drawing
 from ..functions.common import bversion
 from ..functions.bmesh import grow_selection_to_find_face, flood_selection_faces, edge_loops_from_bmedges_old, edge_loops_from_bmedges, flood_selection_by_verts, flood_selection_edge_loop, ensure_lookup, face_region_boundary_loops, bmesh_loose_parts_faces

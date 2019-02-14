@@ -1,15 +1,27 @@
-'''
-Created on Oct 8, 2015
+# Copyright (C) 2015 Patrick Moore
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-@author: Patrick
-'''
-
+# System imports
 import math
-import bgl
 
+# Blender imports
+import bgl
 from bpy_extras import view3d_utils
 from mathutils import Vector, Matrix, Color
 
+# Addon imports
 from .wax_drop_datastructure import InputPoint, CurveNode, SplineSegment
 from ..functions import common_drawing
 from ..addon_common.cookiecutter.cookiecutter import CookieCutter
@@ -129,7 +141,7 @@ class WaxDrop_UI_Draw():
         #    self.draw_circle(loc, 24, .7, green_trans, clear)
 
         # draw region paint brush
-        if self._state == 'paint' or self.actions.alt:
+        if self._state in ['paint wait', 'painting'] or self.actions.alt:
             if self.brush:
                 self.brush.draw_postview(self.context, self.actions.mouse)
 
