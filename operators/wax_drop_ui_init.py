@@ -18,25 +18,38 @@ from ..addon_common.common.ui import Drawing
 
 class WaxDrop_UI_Init():
     def ui_setup(self):
+        # UI Box functionality
+        def get_blobsize(): return self.wax_opts["blob_size"]
+        def get_blobsize_print(): return "%0.3f" % self.wax_opts["blob_size"]
+        def set_blobsize(v): self.wax_opts["blob_size"] = min(max(0.001, float(v)),8.0)
+
+        def get_radius(): return self.wax_opts["paint_radius"]
+        def get_radius_print(): return "%0.3f" % self.wax_opts["paint_radius"]
+        def set_radius(v):
+            self.wax_opts["paint_radius"] = max(0.1, int(v*10)/10)
+            if self.brush:
+                print("setting bursh radius")
+                self.brush.radius = self.wax_opts["paint_radius"]
+                self.brush_density()
+
+        def get_resolution(): return self.wax_opts["resolution"]
+        def get_resolution_print(): return "%0.3f" % self.wax_opts["resolution"]
+        def set_resolution(v):
+            self.wax_opts["resolution"] = min(max(0.05, float(v)), 2.0)
+            self.meta_obj.data.resolution = self.wax_opts["resolution"]
+            self.push_meta_to_wax()
+        def get_action(): return self.wax_opts["action"]
+        def set_action(v): self.wax_opts["action"] = v
+
+        def get_surface_target(): return self.wax_opts["surface_target"]
+        def set_surface_target(v): self.wax_opts["surface_target"] = v
+
+        # instructions
         self.instructions = {
-            "add": "Left-click on the mesh to add a new point",
-            "add (extend)": "Left-click to add new a point connected to the selected point. The green line will visualize the new segments created",
-            "add (insert)": "Left-click on a segment to insert a new a point. The green line will visualize the new segments created",
-            "close loop": "Left-click on the outer hover ring of existing point to close a boundary loop",
-            "select": "Left-click on a point to select it",
-            "sketch": "Hold Shift + left-click and drag to sketch in a series of points",
-            "sketch extend": "Hover near an existing point, Shift + Left-click and drag to sketch in a series of points",
-            "delete": "Right-click on a point to remove it",
-            "delete (disconnect)": "Ctrl + right-click will remove a point and its connected segments",
-            "tweak": "left click and drag a point to move it",
-            "tweak confirm": "Release to place point at cursor's location",
+            "place wax": "Left-click on the mesh to add a new wax ball",
+            "remove wax": "Right-click on the mesh to remove a wax ball",
+            "sketch": "Hold shift + left-click and drag to sketch in a series of wax balls",
             "paint": "Left-click to paint",
-            "paint extend": "Left-click inside and then paint outward from an existing patch to extend it",
-            "paint greedy": "Painting from one patch into another will remove area from 2nd patch and add it to 1st",
-            "paint mergey": "Painting from one patch into another will merge the two patches",
-            "paint remove": "Right-click and drag to delete area from patch",
-            "seed add": "Left-click within a boundary to indicate it as patch segment",
-            "segmentation" : "Left-click on a patch to select it, then use the segmentation buttons to apply changes"
         }
 
         def mode_getter():
@@ -71,43 +84,35 @@ class WaxDrop_UI_Init():
 
         win_tools = self.wm.create_window('Polytrim Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
 
-        precut_container = win_tools.add(ui.UI_Container(rounded=1))
+        precut_container = win_tools.add(ui.UI_Container()) # TODO: make this rounded
 
-        precut_tools = precut_container.add(ui.UI_Frame('Pre Cut Tools', fontsize=16, spacer=0))
-        precut_mode = precut_tools.add(ui.UI_Options(mode_getter, mode_setter, separation=0, rounded=1))
-        precut_mode.add_option('Boundary Edit', value='spline', icon=ui.UI_Image('polyline.png', width=32, height=32))
-        precut_mode.add_option('Boundary > Region', value='seed', icon=ui.UI_Image('seed.png', width=32, height=32))
-        precut_mode.add_option('Region Paint', value='region', icon=ui.UI_Image('paint.png', width=32, height=32))
-
-        container = precut_container.add(ui.UI_Frame('Cut Tools', fontsize=16, spacer=0))
+        container = precut_container.add(ui.UI_Frame('Cut Tools'))
         container.add(ui.UI_Button('Compute Cut', lambda:self.fsm_change('segmentation'), align=-1, icon=ui.UI_Image('divide32.png', width=32, height=32)))
         container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 
-
         segmentation_container = win_tools.add(ui.UI_Container())
-        segmentation_tools = segmentation_container.add(ui.UI_Frame('Segmentation Tools', fontsize=16, spacer=0))
-        #segmentation_mode = segmentation_tools.add(ui.UI_Options(mode_getter, mode_setter))
-        #segmentation_mode.add_option('Segmentation', value='segmentation', margin = 5)
-        #seg_buttons = segmentation_tools.add(ui.UI_EqualContainer(margin=0,vertical=False))
-        segmentation_tools.add(ui.UI_Button('Delete', self.delete_active_patch, tooltip='Delete the selected patch', align=-1, icon=ui.UI_Image('delete_patch32.png', width=32, height=32)))
-        segmentation_tools.add(ui.UI_Button('Separate', self.separate_active_patch, tooltip='Separate the selected patch', align=-1, icon=ui.UI_Image('separate32.png', width=32, height=32)))
-        segmentation_tools.add(ui.UI_Button('Duplicate', self.duplicate_active_patch, tooltip='Duplicate the selected patch', align=-1, icon=ui.UI_Image('duplicate32.png', width=32, height=32)))
-        #seg_buttons.add(ui.UI_Button('Patch to VGroup', self.active_patch_to_vgroup, margin=5))
-
-        container = segmentation_container.add(ui.UI_Frame('Cut Tools', fontsize=16, spacer=0))
+        container = segmentation_container.add(ui.UI_Frame('Wax Dropper Tools'))
         container.add(ui.UI_Button('Commit', self.done, align=0))
         container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 
-
-        info = self.wm.create_window('Polytrim Help', {'pos':9, 'movable':True, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
-        #info.add(ui.UI_Label('Instructions', fontsize=16, align=0, margin=4))
-        self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(7)]
+        info = self.wm.create_window('Polytrim Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
+        #info.add(ui.UI_Label('Instructions', align=0, margin=4))
+        self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(4)]
         #for i in self.inst_paragraphs: i.visible = False
         #self.ui_instructions = info.add(ui.UI_Markdown('test', min_size=(200,200)))
-        precut_options = info.add(ui.UI_Frame('Tool Options', fontsize=16, spacer=0))
-        paint_radius = precut_options.add(ui.UI_Number("Paint radius", radius_getter, radius_setter))
-        no_options = precut_options.add(ui.UI_Label('(none)', color=(1.00, 1.00, 1.00, 0.25)))
+        opts = info.add(ui.UI_Frame('Tool Options'))
+        opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
+        opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
+        opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
+        action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
+        action.add_option("add")
+        action.add_option("subtract")
+        action.add_option("none")
 
+        surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
+        surface.add_option("object")
+        surface.add_option("wax on wax")
+        surface.add_option("scene")
 
         self.set_ui_text_no_points()
 
@@ -142,8 +147,10 @@ class WaxDrop_UI_Init():
     def set_ui_text_no_points(self):
         ''' sets the viewports text when no points are out '''
         self.reset_ui_text()
-        self.inst_paragraphs[0].set_markdown('A) ' + self.instructions['add'])
-        self.inst_paragraphs[1].set_markdown('B) ' + self.instructions['sketch'])
+        self.inst_paragraphs[0].set_markdown('A) ' + self.instructions['place wax'])
+        self.inst_paragraphs[1].set_markdown('B) ' + self.instructions['remove wax'])
+        self.inst_paragraphs[2].set_markdown('C) ' + self.instructions['sketch'])
+        self.inst_paragraphs[3].set_markdown('D) ' + self.instructions['paint'])
 
     def set_ui_text_1_point(self):
         ''' sets the viewports text when 1 point has been placed'''

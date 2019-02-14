@@ -1191,6 +1191,7 @@ def get_path_length(verts):
         l_tot += d.length
     return l_tot
 
+# TODO: convert edges to bool for cyclic or not
 def space_evenly_on_path(verts, edges, segments, shift = 0, debug = False):  #prev deved for Open Dental CAD
     '''
     Gives evenly spaced location along a string of verts

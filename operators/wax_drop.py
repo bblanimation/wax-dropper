@@ -73,7 +73,8 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
     @classmethod
     def can_start(cls, context):
         """ Start only if editing a mesh """
-        return context.object != None
+        ob = context.active_object
+        return ob and ob.type == "MESH"
 
     def start(self):
         """ initialization function """
@@ -92,12 +93,15 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
         # hide other objects
         hide([obj for obj in scn.objects if obj != self.source])
 
+        # make wax and meta objects
+        self.wax_obj, self.meta_obj = self.make_wax_base()
         # get options for UI box
         self.wax_opts = WaxDropperOptions()
         
         # make wax and meta objects
         self.wax_obj, self.meta_obj = self.make_wax_base()
         
+
 
         destructive = "DESTRUCTIVE" # or "NON-DESTRUCTIVE"
         self.net_ui_context = self.NetworkUIContext(self.context, geometry_mode=destructive)
@@ -145,23 +149,57 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             if type(v) is int: return v
             return tuple(v)
         fn_pos = self.wax_opts.gettersetter("position", fn_get_wrap=fn_get_pos_wrap, fn_set_wrap=fn_set_pos_wrap)
-        # UI Box elements
-        win = self.wm.create_window("Wax Dropper", {"fn_pos":fn_pos, "movable":True})
-        help = win.add(ui.UI_Frame("Help"))
-        help.add(ui.UI_WrappedLabel("LEFT MOUSE to place wax"))
-        help.add(ui.UI_WrappedLabel("RIGHT MOUSE to remove wax"))
-        help.add(ui.UI_WrappedLabel("SHIFT+LEFT MOUSE to sketch"))
-        help.add(ui.UI_WrappedLabel("ALT+LEFT MOUSE to paint"))
-        help.add(ui.UI_WrappedLabel("ENTER to finish"))
-        help.add(ui.UI_WrappedLabel("ESC to cancel"))
-        opts = win.add(ui.UI_Frame("Options"))
-        opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
+        self.ui_setup()
+
+        # # UI Box functionality
+        # def get_blobsize(): return self.wax_opts["blob_size"]
+        # def get_blobsize_print(): return "%0.3f" % self.wax_opts["blob_size"]
+        # def set_blobsize(v): self.wax_opts["blob_size"] = min(max(0.001, float(v)),8.0)
+        #
+        # def get_radius(): return self.wax_opts["paint_radius"]
+        # def get_radius_print(): return "%0.3f" % self.wax_opts["paint_radius"]
+        # def set_radius(v):
+        #     self.wax_opts["paint_radius"] = max(0.1, int(v*10)/10)
         opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
         opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
-        action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
-        action.add_option("add")
-        action.add_option("subtract")
-        action.add_option("none")
+        #         self.brush.radius = self.wax_opts["paint_radius"]
+        #         self.brush_density()
+        #
+        # def get_resolution(): return self.wax_opts["resolution"]
+        # def get_resolution_print(): return "%0.3f" % self.wax_opts["resolution"]
+        # def set_resolution(v):
+        #     self.wax_opts["resolution"] = min(max(0.05, float(v)), 2.0)
+        #     self.meta_obj.data.resolution = self.wax_opts["resolution"]
+        #     self.push_meta_to_wax()
+        # def get_action(): return self.wax_opts["action"]
+        # def set_action(v): self.wax_opts["action"] = v
+        #
+        # def get_surface_target(): return self.wax_opts["surface_target"]
+        # def set_surface_target(v): self.wax_opts["surface_target"] = v
+
+        # # UI Box elements
+        # win = self.wm.create_window("Wax Dropper", {"fn_pos":fn_pos, "movable":True})
+        # help = win.add(ui.UI_Frame("Help"))
+        # help.add(ui.UI_WrappedLabel("LEFT MOUSE to place wax"))
+        # help.add(ui.UI_WrappedLabel("RIGHT MOUSE to remove wax"))
+        # help.add(ui.UI_WrappedLabel("SHIFT+LEFT MOUSE to sketch"))
+        # help.add(ui.UI_WrappedLabel("ALT+LEFT MOUSE to paint"))
+        # help.add(ui.UI_WrappedLabel("ENTER to finish"))
+        # help.add(ui.UI_WrappedLabel("ESC to cancel"))
+        # opts = win.add(ui.UI_Frame("Options"))
+        # opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
+        # opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
+        # opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
+        # action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
+        # action.add_option("add")
+        # action.add_option("subtract")
+        # action.add_option("none")
+        #
+        # surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
+        # surface.add_option("object")
+        # surface.add_option("wax on wax")
+        # surface.add_option("scene")
+
         
         surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
         surface.add_option("object")
@@ -260,6 +298,17 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             self.sketching_end = self.net_ui_context.hovered_near[1] if self.net_ui_context.hovered_near[0] in {'POINT', 'POINT CONNECT'} else None
             self.sketcher.finalize(self.context, self.sketching_start, self.sketching_end)
         self.sketcher.reset()
+        # TODO: Simplify sketch
+        # sketch_3d[ind]
+        # sketch_3d[0] > sketch_3d[3] by certain step to place metaballs
+        # Use 'space_evenly_on_path', pass verts, not cyclic, segments = 'get_path_length'/step size
+        # This returns evenly spaced verts
+        self.sketcher.simplify()
+        # TODO: Evenly tessellated sketch
+        self.sketcher.tessellate_uniform()
+        # TODO: Draw metaballs on the sketch
+        # travel along the curve (or interpolate between points along curve)
+        # add metaballs in uniform distance
 
     #--------------------------------------
     # paint
@@ -296,6 +345,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             #self.brush.absorb_geom(self.context, self.actions.mouse)
             self.paint_dirty = True
             # TODO: actually paint the particles
+            # snap using bvh.find_nearest or 'Object.closest_point_on_mesh' (https://docs.blender.org/api/2.79/bpy.types.Object.html)
 
         if self.paint_dirty and (time.time() - self.last_update) > 0.2:
             self.paint_dirty = False
@@ -305,10 +355,48 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
     def region_paint_exit(self):
         # TODO: finish the particle painting
         pass
+    
+    # #--------------------------------------
+    # # paint delete
+    #
+    # @CookieCutter.FSM_State('paint delete', 'enter')
+    # def region_unpaint_enter(self):
+    #     #set the cursor to to something
+    #     # self.network_cutter.find_boundary_faces_cycles()
+    #     self.click_enter_paint(delete = True)
+    #     self.last_loc = None
+    #     self.last_update = 0
+    #     self.paint_dirty = False
+    #
+    # @CookieCutter.FSM_State('paint delete')
+    # def region_unpaint(self):
+    #     self.cursor_modal_set('PAINT_BRUSH')
+    #
+    #     if self.actions.released('RIGHTMOUSE'):
+    #         return 'main'
+    #
+    #     loc,_,_ = self.brush.ray_hit(self.actions.mouse, self.context)
+    #     if loc and (not self.last_loc or (self.last_loc - loc).length > self.brush.radius*(0.25)):
+    #         self.last_loc = loc
+    #         #self.brush.absorb_geom(self.context, self.actions.mouse)
+    #         self.paint_dirty = True
+    #         # TODO: actually remove the particles
+    #
+    #     if self.paint_dirty and (time.time() - self.last_update) > 0.2:
+    #         self.paint_dirty = False
+    #         self.last_update = time.time()
+    #
+    # @CookieCutter.FSM_State('paint delete', 'exit')
+    # def region_unpaint_exit(self):
+    #     # TODO: finish removing the particles
+    #     pass
 
     #--------------------------------------
-    # paint delete
+    # paint wait
 
+    @CookieCutter.FSM_State('paint wait', 'can enter')
+    def region_paint_can_enter(self):
+        return True
     @CookieCutter.FSM_State('paint delete', 'enter')
     def region_unpaint_enter(self):
         #set the cursor to to something
@@ -318,27 +406,22 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
         self.last_update = 0
         self.paint_dirty = False
 
-    @CookieCutter.FSM_State('paint delete')
-    def region_unpaint(self):
+    @CookieCutter.FSM_State('paint wait', 'enter')
+    def region_paint_enter(self):
+        pass
+
+    @CookieCutter.FSM_State('paint wait')
+    def region_paint(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
-        if self.actions.released('RIGHTMOUSE'):
+        if self.actions.released('paint wait') or self.actions.alt == False:
             return 'main'
 
-        loc,_,_ = self.brush.ray_hit(self.actions.mouse, self.context)
-        if loc and (not self.last_loc or (self.last_loc - loc).length > self.brush.radius*(0.25)):
-            self.last_loc = loc
-            #self.brush.absorb_geom(self.context, self.actions.mouse)
-            self.paint_dirty = True
-            # TODO: actually remove the particles
+        pass
 
-        if self.paint_dirty and (time.time() - self.last_update) > 0.2:
-            self.paint_dirty = False
-            self.last_update = time.time()
-
-    @CookieCutter.FSM_State('paint delete', 'exit')
-    def region_unpaint_exit(self):
-        # TODO: finish removing the particles
+    @CookieCutter.FSM_State('paint wait', 'exit')
+    def region_paint_exit(self):
+        # TODO: finish the particle painting
         pass
 
 
@@ -426,10 +509,10 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
 
 
     def brush_density(self):
-        density = 1/(.5 * self.wax_opts["blob_size"])**2  
+        density = 1/(.5 * self.wax_opts["blob_size"])**2
         nps = self.brush.calc_npoints(density)
         self.brush.generate_spiral_points(nps)
-        
+
     def remove_meta_wax(self):
         # remove meta wax object
         meta_obj = bpy.data.objects.get('Meta Wax')
