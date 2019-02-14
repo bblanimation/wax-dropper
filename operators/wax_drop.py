@@ -217,7 +217,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Cookie
             return "paint"
 
         if self.actions.pressed("commit"):
-            self.done();
+            self.done()
             return
 
         if self.actions.pressed("cancel"):
