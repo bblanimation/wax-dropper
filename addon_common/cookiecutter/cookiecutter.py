@@ -159,6 +159,3 @@ class CookieCutter(Operator, CookieCutter_UI, CookieCutter_FSM, CookieCutter_Uti
     def actions_end(self):
         self.context.window_manager.event_timer_remove(self._timer)
         del self._timer
-
-
-

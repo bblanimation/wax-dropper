@@ -4133,32 +4133,32 @@ class NetworkUIContext():
     UI tool for storing data depending on where mouse is located
     * Intermediary between polytrim_states and Network
     '''
-    def __init__(self, context, ui_type='DENSE_POLY', geometry_mode = 'DESTRUCTIVE'):
+    def __init__(self, context, ob, ui_type='DENSE_POLY', geometry_mode = 'DESTRUCTIVE'):
         self.context = context
         self.input_net = None
         self.geometry_mode = geometry_mode
 
 
         #### I DONT KNOW THAT THIS NEEDS TO GO IN NET UI CONTEXT ####
-        self.ob = context.object
+        self.ob = ob
         self.ob.hide = False
         context.scene.render.engine = 'BLENDER_RENDER'
         context.space_data.show_manipulator = False
         context.space_data.viewport_shade = 'SOLID'  #TODO until smarter drawing
-        context.space_data.show_textured_solid = True #TODO until smarter patch drawing
+        # context.space_data.show_textured_solid = True #TODO until smarter patch drawing
 
-        if "patches" not in bpy.data.materials:
-            mat = bpy.data.materials.new("patches")
-            mat.use_shadeless = True
-            mat.use_vertex_color_paint = True
-        else:
-            mat = bpy.data.materials.get("patches")
-            mat.use_shadeless = True
-            mat.use_vertex_color_paint = True
-
-        if "patches" not in self.ob.data.materials:
-            self.ob.data.materials.append(mat)
-            self.ob.material_slots[0].material = mat
+        # if "patches" not in bpy.data.materials:
+        #     mat = bpy.data.materials.new("patches")
+        #     mat.use_shadeless = True
+        #     mat.use_vertex_color_paint = True
+        # else:
+        #     mat = bpy.data.materials.get("patches")
+        #     mat.use_shadeless = True
+        #     mat.use_vertex_color_paint = True
+        #
+        # if "patches" not in self.ob.data.materials:
+        #     self.ob.data.materials.append(mat)
+        #     self.ob.material_slots[0].material = mat
 
         self.bme = bmesh.new()
 

@@ -93,7 +93,8 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
         self.wax_obj, self.meta_obj = self.make_wax_base()
 
         destructive = "DESTRUCTIVE" # or "NON-DESTRUCTIVE"
-        self.net_ui_context = self.NetworkUIContext(self.context, geometry_mode=destructive)
+        self.net_ui_context = NetworkUIContext(self.context, bpy.context.object, geometry_mode=destructive)
+        self.net_ui_context_wax = NetworkUIContext(self.context, self.wax_obj, geometry_mode=destructive)
         self.hint_bad = False   # draw obnoxious things over the bad segments
         self.input_net = InputNetwork(self.net_ui_context)
         self.spline_net = SplineNetwork(self.net_ui_context)
@@ -205,12 +206,13 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
                 self.push_meta_to_wax()
             else:
                 self.draw_wax(loc)
+                self.push_meta_to_wax()
 
     def draw_wax(self, loc, radius=None):
+        # NOTE: wax must be pushed to meta_obj with 'self.push_meta_to_wax()'
         mb = self.meta_obj.data.elements.new(type='BALL')
         mb.co = loc
         mb.radius = radius or self.wax_opts["blob_size"]
-        self.push_meta_to_wax()
 
     def brush_density(self):
         density = 1/(.5 * self.wax_opts["blob_size"])**2
@@ -239,16 +241,5 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
         old_data = self.wax_obj.data
         self.wax_obj.data = self.meta_obj.to_mesh(scn, apply_modifiers=True, settings='PREVIEW')
         bpy.data.meshes.remove(old_data)
-
-    def ray_cast_source(self, p2d, in_world=True):
-        context = self.context
-        view_vector, ray_origin, ray_target = get_view_ray_data(context, p2d)
-        mx,imx = self.net_ui_context.mx,self.net_ui_context.imx
-        itmx = imx.transposed()
-        loc, no, face_ind = ray_cast_bvh(self.net_ui_context.bvh, imx, ray_origin, ray_target)
-        return (mx * loc if loc and in_world else loc, itmx * no if no and in_world else no, face_ind)
-
-    def ray_cast_source_hit(self, p2d):
-        return self.ray_cast_source(p2d, in_world=False)[0] != None
 
     #############################################

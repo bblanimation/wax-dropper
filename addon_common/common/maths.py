@@ -1192,7 +1192,6 @@ def get_path_length(verts):
 def space_evenly_on_path(verts:list, segments:int, cyclic:bool=False, shift:float=0, debug:bool=False):
     '''
     Gives evenly spaced location along a string of vertices
-    Assumes that len(verts) > segments
     Assumes verts are ORDERED along path
 
     args:
@@ -1209,11 +1208,8 @@ def space_evenly_on_path(verts:list, segments:int, cyclic:bool=False, shift:floa
     '''
 
     if len(verts) < 2:
-        print('There are not enough verts to do anything!')
+        # There are not enough verts to do anything!
         return verts
-
-    if segments >= len(verts):
-        print('More segments requested than original verts')
 
     # zero out the shift in case the vert chain insn't cyclic
     if not cyclic and shift != 0:  # not PEP but it shows that we want shift = 0

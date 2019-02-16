@@ -157,4 +157,3 @@ class CookieCutter_Test(CookieCutter):
         bgl.glPopMatrix()
         bgl.glMatrixMode(bgl.GL_PROJECTION)
         bgl.glPopAttrib()
-

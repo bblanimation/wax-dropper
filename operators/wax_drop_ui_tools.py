@@ -1,6 +1,4 @@
-# Copyright (C) 2018 Christopher Gearhart
-# chris@bblanimation.com
-# http://bblanimation.com/
+# Copyright (C) 2018 Patrick Moore
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,15 +76,15 @@ class WaxDrop_UI_Tools():
             if len(self.sketch) < 5 and self.net_ui_context.ui_type == 'DENSE_POLY': return False
             return True
 
-        def finalize_uniform(self, context, step_size:float=0.5, error_threshold:float=0.25):
+        def finalize_uniform(self, context, net_ui_context, step_size:float=0.5, error_threshold:float=0.25):
             """ finalizes sketch data uniformly """
             # get 3d points on mesh from screen-space sketch
             sketch_3d = []
             for pt in self.sketch:
                 view_vector, ray_origin, ray_target = get_view_ray_data(context, pt)  # location and direction in WORLD coordinates
-                loc, no, face_idx = ray_cast_bvh(self.net_ui_context.bvh, self.net_ui_context.imx, ray_origin, ray_target, None)
+                loc, no, face_idx = ray_cast_bvh(net_ui_context.bvh, net_ui_context.imx, ray_origin, ray_target, None)
                 if face_idx != None:
-                        sketch_3d += [self.net_ui_context.mx * loc]
+                        sketch_3d += [net_ui_context.mx * loc]
 
             # slice over sketch_3d to get simplified points
             important_idxs = simplify_RDP(sketch_3d, error_threshold)
@@ -95,7 +93,7 @@ class WaxDrop_UI_Tools():
             locs = [loc for i,loc in enumerate(sketch_3d) if i in important_idxs]  # TODO: make this list initialization more efficient
 
             # get evenly spaced group of points along path of important locations
-            new_locs = space_evenly_on_path(locs, segments=int(get_path_length(locs)//step_size))
+            new_locs = space_evenly_on_path(locs, segments=int(get_path_length(locs)/step_size))
 
             # returns evenly spaced locs along sketch
             return new_locs
@@ -261,6 +259,18 @@ class WaxDrop_UI_Tools():
 
             self.spiral_points = points
 
+        def spiral_points_to_3d(self, loc, norm):
+            # convert to 3d locations
+            norm = self.xform.l2w_normal(norm)
+            tr = Vector((0,0,1)) if abs(norm.z) < 0.9 else Vector((1,0,0))
+            tx = Direction(norm.cross(tr))
+            ty = Direction(norm.cross(tx))
+            spiral_points_3d = list()
+            for mx, my in self.spiral_points:  #spiral cluster
+                p = loc + (tx * mx + ty * my) * self.radius
+                spiral_points_3d.append(p)
+            return spiral_points_3d
+
         def ray_hit(self, pt_screen, context):
             view_vector, ray_origin, ray_target = get_view_ray_data(context, pt_screen)  #a location and direction in WORLD coordinates
             return ray_cast_bvh(self.net_ui_context.bvh, self.net_ui_context.imx, ray_origin, ray_target, None)
@@ -376,350 +386,13 @@ class WaxDrop_UI_Tools():
             bgl.glDepthRange(0, 1)
 
 
-
-
-    class GrabManager():
-        '''
-        UI tool for managing input point grabbing/moving made by user.
-        * Intermediary between polytrim_states and Network
-        '''
-        def __init__(self, input_net, net_ui_context, network_cutter):
-            self.net_ui_context = net_ui_context
-            self.input_net = input_net
-            self.network_cutter = network_cutter
-
-            self.grab_point = None
-            self.original_point = None
-            self.backup_data = {}
-        def in_use(self): return self.grab_point != None
-        in_use = property(in_use)
-
-        def initiate_grab_point(self):
-            self.grab_point = self.net_ui_context.selected
-            self.backup_data =  self.grab_point.duplicate_data()
-
-        def move_grab_point(self,context,mouse_loc):
-            ''' Moves location of point'''
-            d = self.net_ui_context.hovered_mesh
-            n = self.net_ui_context.hovered_near
-
-            if d and self.grab_point:
-                print(n)
-                if n[0] == 'NON_MAN_ED' and len(self.grab_point.link_segments) == 1:
-                    imx = self.net_ui_context.imx
-                    ed, world_loc = n[1]
-                    face = ed.link_faces[0]
-
-                    self.grab_point.set_values(world_loc, imx * world_loc, d["view"], face.index)
-                    self.grab_point.bmface = face
-                    self.grab_point.seed_geom = ed  #we have ensure it's not a non manifold
-                    self.grab_point.bmedge = ed #unused, but will in future
-
-                else:
-                    self.grab_point.set_values(d["world loc"], d["local loc"], d["view"], d["face index"])
-                    self.grab_point.bmface = self.input_net.bme.faces[d["face index"]]
-                    self.grab_point.seed_geom = None  #we have ensure it's not a non manifold
-                    self.grab_point.bmedge = None #unused, but will in future
-
-
-                #update bezier preview and snap to surface
-                if isinstance(self.grab_point, CurveNode):
-                    self.grab_point.calc_handles()
-                    for seg in self.grab_point.link_segments:
-                        seg.is_inet_dirty = True
-                        node = seg.other_point(self.grab_point)
-                        node.calc_handles()
-                        node.update_splines()
-
-
-                    self.snap_splines()
-
-        def snap_splines(self):
-
-            #moving one point affects 4 splines
-
-            # -----(n-2)========(n-1)=======N========(n+1)=========(n+2)------
-
-            segs = set()
-            for seg in self.grab_point.link_segments:
-                segs.add(seg)
-                if not seg.other_point(self.grab_point): continue
-                p_other = seg.other_point(self.grab_point)
-                for seg1 in p_other.link_segments:
-                    segs.add(seg1)
-
-            for update_seg in segs:
-                snap_pts = []
-                for loc in update_seg.draw_tessellation:
-                    snap = self.net_ui_context.closest_world_loc(loc)
-                    if snap: snap_pts += [snap]
-
-                update_seg.draw_tessellation = snap_pts
-
-        def grab_cancel(self):
-            ''' returns variables to their status before grab was initiated '''
-            if not self.grab_point: return
-            for key in self.backup_data:
-                setattr(self.grab_point, key, self.backup_data[key])
-
-            if isinstance(self.grab_point, CurveNode):
-                self.grab_point.calc_handles()
-                for seg in self.grab_point.link_segments:
-                    seg.is_inet_dirty = False
-                    node = seg.other_point(self.grab_point)
-                    node.calc_handles()
-                    node.update_splines()
-
-            self.grab_point = None #TODO BROKEN
-            return
-
-        def finalize(self, context):
-            ''' sets new variables based on new location '''
-            if not self.grab_point: return
-
-            if isinstance(self.net_ui_context.selected, InputPoint):
-                for seg in self.net_ui_context.selected.link_segments:
-                    seg.path = []
-                    seg.needs_calculation = True
-                    seg.calculation_complete = False
-
-            else:
-                self.net_ui_context.selected.update_input_point(self.input_net)
-                self.net_ui_context.selected.calc_handles()
-                for seg in self.net_ui_context.selected.link_segments:
-                    node = seg.other_point(self.net_ui_context.selected)
-                    node.calc_handles()
-                    node.update_splines()
-
-                print(len(self.grab_point.link_segments))
-                print(self.grab_point.face_index)
-                print(self.grab_point.seed_geom)
-
-            self.grab_point = None
-
-
-            return
-
-    class NetworkUIContext():
-        '''
-        UI tool for storing data depending on where mouse is located
-        * Intermediary between polytrim_states and Network
-        '''
-        def __init__(self, context, ui_type='DENSE_POLY', geometry_mode = 'DESTRUCTIVE'):
-            self.context = context
-            self.input_net = None
-            self.geometry_mode = geometry_mode
-
-
-            #### I DONT KNOW THAT THIS NEEDS TO GO IN NET UI CONTEXT ####
-            self.ob = context.object
-            self.ob.hide = False
-            context.scene.render.engine = 'BLENDER_RENDER'
-            context.space_data.show_manipulator = False
-            context.space_data.viewport_shade = 'SOLID'  #TODO until smarter drawing
-            context.space_data.show_textured_solid = True #TODO until smarter patch drawing
-
-            if "patches" not in bpy.data.materials:
-                mat = bpy.data.materials.new("patches")
-                mat.use_shadeless = True
-                mat.use_vertex_color_paint = True
-            else:
-                mat = bpy.data.materials.get("patches")
-                mat.use_shadeless = True
-                mat.use_vertex_color_paint = True
-
-            if "patches" not in self.ob.data.materials:
-                self.ob.data.materials.append(mat)
-                self.ob.material_slots[0].material = mat
-
-            self.bme = bmesh.new()
-
-            #we are going to make destructive edits into a copy of the mesh
-            #then at the end, if we are in destructive mode, we delete backup
-            #mesh and keep edited mesh, otherwise we delete edited mesh and put
-            #backup mesh back in place
-            copy_me = self.ob.data.copy()
-            self.backup_data = self.ob.data
-            self.ob.data = copy_me
-
-            self.bme.from_mesh(self.ob.data)
-            ensure_lookup(self.bme)
-            start = time.time()
-            self.bvh = BVHTree.FromBMesh(self.bme)
-            finish = time.time()
-
-            print('took %f seconds to build BVH' % (finish-start))
-            self.mx, self.imx = get_matrices(self.ob)
-            self.mx_norm = self.imx.transposed().to_3x3() #local directions to global
-            self.imx_norm = self.imx.to_3x3() #global direction to local
-
-
-            if ui_type not in {'SPARSE_POLY','DENSE_POLY', 'BEZIER'}: self.ui_type = 'SPARSE_POLY'
-            else: self.ui_type = ui_type
-
-            self.mouse_loc = None
-
-            self.hovered_mesh = {}
-
-            # TODO: Organize everything below this
-            self.selected = None
-            self.snap_element = None
-            self.connect_element = None
-            self.closest_ep = None
-            self.hovered_near = [None, -1]
-
-            self.kd = None
-            self.non_man_bmverts = []
-            self.find_non_man()
-            self.non_man_eds = [ed.index for ed in self.bme.edges if not ed.is_manifold]
-            self.non_man_ed_loops = edge_loops_from_bmedges_old(self.bme, self.non_man_eds)
-
-
-        def inspect_print(self):
-            print(self.selected)
-            print(self.snap_element)
-            print(self.connect_element)
-            print(self.closest_ep)
-            print(self.hovered_near)
-
-        def update_bvh(self):
-
-            start = time.time()
-            del self.bvh
-            self.bvh = BVHTree.FromBMesh(self.bme)
-            finish = time.time()
-
-            print('updated BVH in %f seconds' % (finish-start))
-
-        def has_non_man(self): return len(self.non_man_bmverts) > 0
-        def is_hovering_mesh(self):
-            if self.hovered_mesh: return self.hovered_mesh["face index"] != -1
-            return False
-        has_non_man = property(has_non_man)
-        is_hovering_mesh = property(is_hovering_mesh)
-
-        def closest_world_loc(self, loc):
-            local_loc = self.imx * loc
-            loc, no, face_ind, d =  self.bvh.find_nearest(local_loc)
-
-            if loc:
-                return self.mx * loc
-            else:
-                return None
-
-
-        def find_non_man(self):
-            non_man_eds = [ed.index for ed in self.bme.edges if not ed.is_manifold]
-            non_man_ed_loops = edge_loops_from_bmedges_old(self.bme, non_man_eds)
-            non_man_points = []
-            for loop in non_man_ed_loops:
-                non_man_points += [self.ob.matrix_world * self.bme.verts[ind].co for ind in loop]
-                self.non_man_bmverts += [self.bme.verts[ind].index for ind in loop]
-            if non_man_points:
-                self.kd = kdtree.KDTree(len(non_man_points))
-                for i, v in enumerate(non_man_points):
-                    self.kd.insert(v, i)
-                self.kd.balance()
-            else:
-                self.kd = None
-
-        def set_network(self, input_net): self.input_net = input_net
-
-        def update(self, mouse_loc):
-            self.mouse_loc = mouse_loc
-            self.ray_cast_mouse()
-
-            #self.nearest_non_man_loc()
-
-        def ray_cast_mouse_ob(self):
-            view_vector, ray_origin, ray_target= get_view_ray_data(self.context, self.mouse_loc)
-            loc, no, face_ind = ray_cast(self.ob, self.imx, ray_origin, ray_target, None)
-            if face_ind == -1: self.hovered_mesh = {}
-            else:
-                self.hovered_mesh["world loc"] = self.mx * loc
-                self.hovered_mesh["local loc"] = loc
-                self.hovered_mesh["normal"] = no
-                self.hovered_mesh["face index"] = face_ind
-                self.hovered_mesh["view"] = view_vector
-
-
-        def ray_cast_mouse(self):
-            view_vector, ray_origin, ray_target= get_view_ray_data(self.context, self.mouse_loc)
-            loc, no, face_ind = ray_cast_bvh(self.bvh, self.imx, ray_origin, ray_target, None)
-            if face_ind == None: self.hovered_mesh = {}
-            else:
-                self.hovered_mesh["world loc"] = self.mx * loc
-                self.hovered_mesh["local loc"] = loc
-                self.hovered_mesh["normal"] = no
-                self.hovered_mesh["face index"] = face_ind
-                self.hovered_mesh["view"] = view_vector
-
-        def nearest_non_man_loc(self):
-            '''
-            finds nonman edges and verts nearby to cursor location
-            '''
-            if self.has_non_man and self.hovered_mesh:
-                co3d, index, dist = self.kd.find(self.mx * self.hovered_mesh["local loc"])
-
-                #get the actual non man vert from original list
-                close_bmvert = self.bme.verts[self.non_man_bmverts[index]] #stupid mapping, unreadable, terrible, fix this, because can't keep a list of actual bmverts
-                close_eds = [ed for ed in close_bmvert.link_edges if not ed.is_manifold]
-                if len(close_eds) == 2:
-                    bm0 = close_eds[0].other_vert(close_bmvert)
-                    bm1 = close_eds[1].other_vert(close_bmvert)
-
-                    a0 = bm0.co
-                    b   = close_bmvert.co
-                    a1  = bm1.co
-
-                    inter_0, d0 = intersect_point_line(self.hovered_mesh["local loc"], a0, b)
-                    inter_1, d1 = intersect_point_line(self.hovered_mesh["local loc"], a1, b)
-
-                    region = self.context.region
-                    rv3d = self.context.region_data
-                    loc3d_reg2D = view3d_utils.location_3d_to_region_2d
-                    mouse_v = Vector(self.mouse_loc)
-
-                    screen_0 = loc3d_reg2D(region, rv3d, self.mx * inter_0)
-                    screen_1 = loc3d_reg2D(region, rv3d, self.mx * inter_1)
-                    screen_v = loc3d_reg2D(region, rv3d, self.mx * b)
-
-                    if screen_0 and screen_1 and screen_v:
-                        screen_d0 = (mouse_v - screen_0).length
-                        screen_d1 = (mouse_v - screen_1).length
-                        screen_dv = (mouse_v - screen_v).length
-
-                        #TODO, decid how to handle when very very close to vertcies
-                        if 0 < d0 <= 1 and screen_d0 < 20:
-                            self.hovered_near = ['NON_MAN_ED', (close_eds[0], self.mx*inter_0)]
-                            return
-                        elif 0 < d1 <= 1 and screen_d1 < 20:
-                            self.hovered_near = ['NON_MAN_ED', (close_eds[1], self.mx*inter_1)]
-                            return
-
-                        else:
-                            self.hovered_near = [None, (None, None)]
-                    else:
-                            self.hovered_near = [None, (None, None)]
-            else:
-                self.hovered_near = [None, (None, None)]
-
-        def nearest_endpoint(self, mouse_3d_loc):
-            def dist3d(ip):
-                return (ip.world_loc - mouse_3d_loc).length
-
-            endpoints = [ip for ip in self.input_net.points if ip.is_endpoint]
-            if len(endpoints) == 0: return None
-
-            return min(endpoints, key = dist3d)
-
     # TODO: Clean this up
     def click_add_point(self, context, mouse_loc, connect=True):
         '''
         this will add a point into the trim line
         close the curve into a cyclic curve
 
-        #Need to get smarter about closing the loop
+        NOTE: Need to get smarter about closing the loop
         '''
         def none_selected(): self.net_ui_context.selected = None # TODO: Change this weird function in function shizz
 

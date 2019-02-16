@@ -315,6 +315,7 @@ class Actions:
         return any(p in actions for p in self.now_pressed.values())
 
     def navigating(self):
+        if self.alt: return False
         actions = self.convert('navigate')
         if self.trackpad: return True
         if self.ndof: return True
