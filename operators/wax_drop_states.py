@@ -47,7 +47,7 @@ class WaxDrop_States():
     default_keymap = {
         "sketch":     {"LEFTMOUSE"},
         "remove wax": {"SHIFT+LEFTMOUSE"},
-        "painting":   {"ALT+LEFTMOUSE"},
+        "painting":   {"LEFTMOUSE"},
         "commit":     {"RET"},
         "cancel":     {"ESC"},
     }
@@ -58,7 +58,8 @@ class WaxDrop_States():
     @CookieCutter.FSM_State("main")
     def modal_main(self):
         self.cursor_modal_set("CROSSHAIR")
-
+        
+                
         if self.actions.pressed("remove wax"):
             self.perform_wax_action(delete_wax=True)
             return
@@ -67,6 +68,7 @@ class WaxDrop_States():
             return "sketch"
 
         if self.actions.alt:
+            print('paint wait')
             return "paint wait"
 
         if self.actions.pressed("commit"):
@@ -107,11 +109,15 @@ class WaxDrop_States():
         # if not self.sketcher.is_good():
         #     return
         # Simplify sketch into uniformly spaced locs
-        new_locs = self.sketcher.finalize_uniform(self.context, self.net_ui_context if self.wax_opts["surface_target"] == "object" else self.net_ui_context_wax,  step_size=self.wax_opts["blob_size"] * 0.75, error_threshold=0.1)
+        new_locs = self.sketcher.finalize_uniform(self.context, 
+                                                  self.net_ui_context if self.wax_opts["surface_target"] == "object" else self.net_ui_context_wax,  
+                                                  step_size=self.wax_opts["blob_size"] * 0.25, 
+                                                  error_threshold=0.1 * self.wax_opts["blob_size"])
         # add metaballs at uniformly spaced locs
         for loc in new_locs:
             self.draw_wax(loc)
-            self.push_meta_to_wax()
+        
+        self.push_meta_to_wax()
         # reset the sketcher object for next time
         self.sketcher.reset()
 
@@ -131,8 +137,10 @@ class WaxDrop_States():
     def region_paint_wait(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
-        if not self.actions.alt:
-            return 'main'
+        
+        #if not self.actions.alt:
+        #    print('back to main')
+        #    return 'main'
 
         if self.event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE', 'TRACKPADPAN'}:
             if self.event.type == 'TRACKPADPAN':
@@ -144,6 +152,7 @@ class WaxDrop_States():
             self.brush_density()
 
         if self.actions.pressed('painting'):
+            print('enter painting')
             return 'painting'
 
     @CookieCutter.FSM_State('paint wait', 'exit')
@@ -172,8 +181,6 @@ class WaxDrop_States():
     def region_painting(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
-        if self.actions.released('painting'):
-            return 'paint wait' if self.actions.alt else 'main'
 
         loc,norm,_ = self.brush.ray_hit(self.actions.mouse, self.context)
         if loc and (not self.last_loc or (self.last_loc - loc).length > self.brush.radius/4):
@@ -183,14 +190,19 @@ class WaxDrop_States():
             # paint the particles
             spiral_points_3d = self.brush.spiral_points_to_3d(loc, norm)
             for loc0 in spiral_points_3d:
-                result, loc1, norm, _ = self.source.closest_point_on_mesh(loc0, distance=self.brush.radius/2)
+                result, loc1, norm, _ = self.source.closest_point_on_mesh(loc0, distance= 2 * self.wax_opts["blob_size"])
                 # TODO: throw away results with normal facing away from view (backfaces)
-                self.draw_wax(loc1)
+                #filter any snapping greater than the wax radius?
+                if result:
+                    self.draw_wax(loc1)
+                    
             self.draw_wax(loc)
             self.push_meta_to_wax()
 
 
-
+        if self.actions.released('painting'):
+            return 'paint wait'# if self.actions.alt else 'main'
+        
         if self.paint_dirty and (time.time() - self.last_update) > 0.2:
             self.paint_dirty = False
             self.last_update = time.time()

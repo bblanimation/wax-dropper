@@ -83,9 +83,14 @@ class WaxDrop_UI_Init():
 
         precut_container = win_tools.add(ui.UI_Container()) # TODO: make this rounded
 
-        container = precut_container.add(ui.UI_Frame('Cut Tools'))
-        container.add(ui.UI_Button('Compute Cut', lambda:self.fsm_change('segmentation'), align=-1, icon=ui.UI_Image('divide32.png', width=32, height=32)))
-        container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
+        container = precut_container.add(ui.UI_Frame('Wax Drop Mode'))
+        wax_mode = container.add(ui.UI_Options(mode_getter, mode_setter, separation=0))
+        wax_mode.add_option('Sketch', value='main')
+        wax_mode.add_option('Paint', value='paint wait')
+        
+        
+        #container.add(ui.UI_Button('Compute Cut', lambda:self.fsm_change('segmentation'), align=-1, icon=ui.UI_Image('divide32.png', width=32, height=32)))
+        #container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 
         segmentation_container = win_tools.add(ui.UI_Container())
         container = segmentation_container.add(ui.UI_Frame('Wax Dropper Tools'))
