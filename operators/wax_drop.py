@@ -212,7 +212,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
     def draw_wax(self, loc, radius=None):
         # NOTE: wax must be pushed to meta_obj with 'self.push_meta_to_wax()'
         mb = self.meta_obj.data.elements.new(type='BALL')
-        mb.co = loc
+        mb.co = loc * self.net_ui_context.mx
         mb.radius = radius or self.wax_opts["blob_size"]
 
     def brush_density(self):

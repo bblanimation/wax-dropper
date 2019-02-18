@@ -86,7 +86,7 @@ class WaxDrop_UI_Tools():
                 view_vector, ray_origin, ray_target = get_view_ray_data(context, pt)  # location and direction in WORLD coordinates
                 loc, no, face_idx = ray_cast_bvh(net_ui_context.bvh, net_ui_context.imx, ray_origin, ray_target, None)
                 if face_idx != None:
-                        sketch_3d += [net_ui_context.mx * loc]
+                    sketch_3d += [net_ui_context.mx * loc]
 
             finish = time.time()
             print('ray cast in %f' % (finish-start))
