@@ -20,7 +20,7 @@ import bmesh
 import bpy
 import bgl
 from bpy_extras import view3d_utils
-from mathutils import Vector, kdtree, Color
+from mathutils import Vector, kdtree, Color, Matrix
 from mathutils.geometry import intersect_point_line
 from mathutils.bvhtree import BVHTree
 

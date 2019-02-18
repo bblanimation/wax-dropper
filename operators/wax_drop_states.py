@@ -101,7 +101,7 @@ class WaxDrop_States():
                                                   error_threshold=0.1 * self.wax_opts["blob_size"])
         # add metaballs at uniformly spaced locs
         for loc in new_locs:
-            self.draw_wax(loc)
+            self.draw_wax(loc * self.meta_obj.matrix_world)
 
         self.push_meta_to_wax()
         # reset the sketcher object for next time
@@ -166,10 +166,10 @@ class WaxDrop_States():
         loc,norm,_ = self.brush.ray_hit(self.actions.mouse, self.context)
         if loc and (not self.last_loc or (self.last_loc - loc).length > self.brush.radius/4):
             self.last_loc = loc
-            #self.brush.absorb_geom(self.context, self.actions.mouse)
+            # self.brush.absorb_geom(self.context, self.actions.mouse)
             self.paint_dirty = True
             # paint the particles
-            spiral_points_3d = self.brush.spiral_points_to_3d(loc, norm)
+            spiral_points_3d = self.brush.spiral_points_to_3d(loc, norm * self.net_ui_context.mx)
             for loc0 in spiral_points_3d:
                 result, loc1, norm1, _ = self.source.closest_point_on_mesh(loc0, distance= 2 * self.wax_opts["blob_size"])
                 # TODO: throw away results with normal facing away from view (backfaces)
@@ -178,7 +178,7 @@ class WaxDrop_States():
                 if result:
                     self.draw_wax(loc1)
 
-            loc = self.shift_along_normal(loc, norm)
+            # loc = self.shift_along_normal(loc, norm)
             self.draw_wax(loc)
             self.push_meta_to_wax()
 
