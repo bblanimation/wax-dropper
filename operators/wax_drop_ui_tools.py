@@ -80,7 +80,7 @@ class WaxDrop_UI_Tools():
             """ finalizes sketch data uniformly """
             # get 3d points on mesh from screen-space sketch
             start = time.time()
-            
+
             sketch_3d = []
             for pt in self.sketch:
                 view_vector, ray_origin, ray_target = get_view_ray_data(context, pt)  # location and direction in WORLD coordinates
@@ -94,22 +94,22 @@ class WaxDrop_UI_Tools():
             # slice over sketch_3d to get simplified points
             #TODO error threshold should be related to particle size.  Eg .1 # self.blob_size
             important_idxs = simplify_RDP(sketch_3d, error_threshold)
-    
+
             finish = time.time()
             print('found important verts in %f' % (finish-start))
             start = finish
-            
+
             # get important locations from important indices in sketch_3d
             locs = [loc for i,loc in enumerate(sketch_3d) if i in important_idxs]  # TODO: make this list initialization more efficient
 
             # get evenly spaced group of points along path of important locations
             #TODO step size should be related to particle size to "overpack" them into creating tubes
             new_locs = space_evenly_on_path(locs, segments=int(get_path_length(locs)/step_size))
-            
+
             finish = time.time()
             print('spaced evenly on path in %f' % (finish-start))
             start = finish
-            
+
             # returns evenly spaced locs along sketch
             return new_locs
 
@@ -399,7 +399,7 @@ class WaxDrop_UI_Tools():
             bgl.glDepthFunc(bgl.GL_LEQUAL)
             bgl.glDepthMask(bgl.GL_TRUE)
             bgl.glDepthRange(0, 1)
-    
+
     # TODO: Clean this up
     def click_add_point(self, context, mouse_loc, connect=True):
         '''
@@ -1198,8 +1198,6 @@ class WaxDrop_UI_Tools():
         self.network_cutter.face_patches.remove(patch)
         self.net_ui_context.bme.to_mesh(self.net_ui_context.ob.data)
 
-
-
     def closest_endpoint(self, pt3d):
         def dist3d(point):
             return (point.world_loc - pt3d).length
@@ -1294,16 +1292,16 @@ class WaxDrop_UI_Tools():
         return (None, None)
 
     def enter_poly_mode(self):
-        if self._state == 'main': return
+        if self._state == 'sketch wait': return
 
-        if self._state == 'paint main':
+        if self._state == 'paint wait':
             del self.brush
             self.brush = None
             self.paint_exit()
-            self.fsm_change('main')
+            self.fsm_change('sketch wait')
 
         elif self._state == 'seed':
-            self.fsm_change('main')
+            self.fsm_change('sketch wait')
 
 
     def enter_paint_mode(self):

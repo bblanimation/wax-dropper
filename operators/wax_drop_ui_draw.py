@@ -141,7 +141,7 @@ class WaxDrop_UI_Draw():
         #    self.draw_circle(loc, 24, .7, green_trans, clear)
 
         # draw region paint brush
-        if self._state in ['paint wait', 'painting'] or self.actions.alt:
+        if self._state in ['paint wait', 'painting']:
             if self.brush:
                 self.brush.draw_postview(self.context, self.actions.mouse)
 
@@ -149,7 +149,7 @@ class WaxDrop_UI_Draw():
     def draw_postpixel(self):
         self.draw_2D_stuff()
         # if self.sketcher.has_locs:
-        if self._state == 'sketch':
+        if self._state == 'sketching':
             draw2d_polyline(self.sketcher.get_locs(), (0.0, 1.0, 0.0, 0.4), 2)
 
 

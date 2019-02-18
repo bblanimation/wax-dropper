@@ -45,7 +45,7 @@ class WaxDrop_States():
     # State keymap
 
     default_keymap = {
-        "sketch":     {"LEFTMOUSE"},
+        "sketching":  {"LEFTMOUSE"},
         "remove wax": {"SHIFT+LEFTMOUSE"},
         "painting":   {"LEFTMOUSE"},
         "commit":     {"RET"},
@@ -57,19 +57,24 @@ class WaxDrop_States():
 
     @CookieCutter.FSM_State("main")
     def modal_main(self):
+        return "sketch wait"
+
+    #--------------------------------------
+    # sketch wait
+
+    @CookieCutter.FSM_State("sketch wait")
+    def modal_sketch_wait(self):
         self.cursor_modal_set("CROSSHAIR")
-        
-                
+
         if self.actions.pressed("remove wax"):
             self.perform_wax_action(delete_wax=True)
             return
 
-        if self.actions.pressed("sketch"):
-            return "sketch"
+        if self.actions.pressed("sketching"):
+            return "sketching"
 
-        if self.actions.alt:
-            print('paint wait')
-            return "paint wait"
+        if self.event.type in ("LEFT_ALT", "RIGHT_ALT") and self.event.value == "PRESS":
+           return 'paint wait'
 
         if self.actions.pressed("commit"):
             self.done();
@@ -80,53 +85,49 @@ class WaxDrop_States():
             return
 
     #--------------------------------------
-    # sketch
+    # sketching
 
-    @CookieCutter.FSM_State("sketch", "can enter")
-    def can_enter_sketch(self):
+    @CookieCutter.FSM_State("sketching", "can enter")
+    def can_enter_sketching(self):
         # if self.wax_opts["surface_target"] == "object":
         #     return self.ray_cast_source_hit(self.actions.mouse)
         # else:
         #     # TODO: potentially check for ray cast hit on wax object
         return True
 
-    @CookieCutter.FSM_State("sketch", "enter")
-    def enter_sketch(self):
+    @CookieCutter.FSM_State("sketching", "enter")
+    def enter_sketching(self):
         self.sketcher.add_loc(*self.actions.mouse)
         if self.wax_opts["surface_target"] == "object_wax":
             self.net_ui_context_wax.update_bvh()
 
-    @CookieCutter.FSM_State("sketch")
-    def modal_sketch(self):
+    @CookieCutter.FSM_State("sketching")
+    def modal_sketching(self):
         if self.actions.mousemove:
             self.sketcher.smart_add_loc(*self.actions.mouse)
-        if self.actions.released('sketch'):
-            return 'main'
+        if self.actions.released('sketching'):
+            return 'sketch wait'
 
-    @CookieCutter.FSM_State("sketch", "exit")
-    def end_sketch(self):
+    @CookieCutter.FSM_State("sketching", "exit")
+    def end_sketching(self):
         # return if a single point was drawn
         # if not self.sketcher.is_good():
         #     return
         # Simplify sketch into uniformly spaced locs
-        new_locs = self.sketcher.finalize_uniform(self.context, 
-                                                  self.net_ui_context if self.wax_opts["surface_target"] == "object" else self.net_ui_context_wax,  
-                                                  step_size=self.wax_opts["blob_size"] * 0.25, 
+        new_locs = self.sketcher.finalize_uniform(self.context,
+                                                  self.net_ui_context if self.wax_opts["surface_target"] == "object" else self.net_ui_context_wax,
+                                                  step_size=self.wax_opts["blob_size"] * 0.25,
                                                   error_threshold=0.1 * self.wax_opts["blob_size"])
         # add metaballs at uniformly spaced locs
         for loc in new_locs:
             self.draw_wax(loc)
-        
+
         self.push_meta_to_wax()
         # reset the sketcher object for next time
         self.sketcher.reset()
 
     #--------------------------------------
     # paint wait
-
-    @CookieCutter.FSM_State('paint wait', 'can enter')
-    def region_paint_wait_can_enter(self):
-        return True
 
     @CookieCutter.FSM_State('paint wait', 'enter')
     def region_paint_wait_enter(self):
@@ -137,10 +138,9 @@ class WaxDrop_States():
     def region_paint_wait(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
-        
-        #if not self.actions.alt:
-        #    print('back to main')
-        #    return 'main'
+        if self.actions.pressed("remove wax"):
+            self.perform_wax_action(delete_wax=True)
+            return
 
         if self.event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE', 'TRACKPADPAN'}:
             if self.event.type == 'TRACKPADPAN':
@@ -152,12 +152,18 @@ class WaxDrop_States():
             self.brush_density()
 
         if self.actions.pressed('painting'):
-            print('enter painting')
             return 'painting'
 
-    @CookieCutter.FSM_State('paint wait', 'exit')
-    def region_paint_wait_exit(self):
-        pass
+        if self.event.type in ("LEFT_ALT", "RIGHT_ALT") and self.event.value == "PRESS":
+           return 'sketch wait'
+
+        if self.actions.pressed("commit"):
+            self.done();
+            return
+
+        if self.actions.pressed("cancel"):
+            self.done(cancel=True)
+            return
 
     #--------------------------------------
     # painting
@@ -195,14 +201,14 @@ class WaxDrop_States():
                 #filter any snapping greater than the wax radius?
                 if result:
                     self.draw_wax(loc1)
-                    
+
             self.draw_wax(loc)
             self.push_meta_to_wax()
 
 
         if self.actions.released('painting'):
-            return 'paint wait'# if self.actions.alt else 'main'
-        
+            return 'paint wait'
+
         if self.paint_dirty and (time.time() - self.last_update) > 0.2:
             self.paint_dirty = False
             self.last_update = time.time()
@@ -229,7 +235,7 @@ class WaxDrop_States():
     #     self.cursor_modal_set('PAINT_BRUSH')
     #
     #     if self.actions.released('RIGHTMOUSE'):
-    #         return 'main'
+    #         return 'sketch wait'
     #
     #     loc,_,_ = self.brush.ray_hit(self.actions.mouse, self.context)
     #     if loc and (not self.last_loc or (self.last_loc - loc).length > self.brush.radius*(0.25)):

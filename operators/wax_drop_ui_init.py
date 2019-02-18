@@ -61,10 +61,11 @@ class WaxDrop_UI_Init():
         # instructions
         self.instructions = {
             "place wax": "Left-click on the mesh to add a new wax ball",
-            "sketch": "Hold left-click and drag to sketch in a series of wax balls",
+            "change state": "Press 'ALT' to toggle between states",
+            "sketch": "In sketch state, hold left-click and drag to sketch a series of wax balls",
+            "paint": "In paint state, hold left-click and drag to paint a group of wax balls",
             "remove wax": "Shift + left-click on the mesh to remove a wax ball",
             # "remove wax series": "Shift + Right-click on the mesh to remove a series of connected wax balls",
-            "paint": "Hold Alt + left-click and drag to paint",
         }
 
         def mode_getter():
@@ -85,10 +86,10 @@ class WaxDrop_UI_Init():
 
         container = precut_container.add(ui.UI_Frame('Wax Drop Mode'))
         wax_mode = container.add(ui.UI_Options(mode_getter, mode_setter, separation=0))
-        wax_mode.add_option('Sketch', value='main')
+        wax_mode.add_option('Sketch', value='sketch wait')
         wax_mode.add_option('Paint', value='paint wait')
-        
-        
+
+
         #container.add(ui.UI_Button('Compute Cut', lambda:self.fsm_change('segmentation'), align=-1, icon=ui.UI_Image('divide32.png', width=32, height=32)))
         #container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 
@@ -99,7 +100,7 @@ class WaxDrop_UI_Init():
 
         info = self.wm.create_window('Wax Dropper Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
         info.add(ui.UI_Label('Instructions', align=0, margin=4))
-        self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(4)]
+        self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(5)]
         #for i in self.inst_paragraphs: i.visible = False
         #self.ui_instructions = info.add(ui.UI_Markdown('test', min_size=(200,200)))
         opts = info.add(ui.UI_Frame('Tool Options'))
@@ -123,10 +124,8 @@ class WaxDrop_UI_Init():
     def set_ui_text(self):
         ''' sets the viewports text '''
         self.reset_ui_text()
-        self.inst_paragraphs[0].set_markdown('A) ' + self.instructions['place wax'])
-        self.inst_paragraphs[1].set_markdown('B) ' + self.instructions['sketch'])
-        self.inst_paragraphs[2].set_markdown('C) ' + self.instructions['remove wax'])
-        self.inst_paragraphs[3].set_markdown('D) ' + self.instructions['paint'])
+        for i,val in enumerate(['place wax', 'change state', 'sketch', 'paint', 'remove wax']):
+            self.inst_paragraphs[i].set_markdown(chr(65 + i) + ") " + self.instructions[val])
 
     def reset_ui_text(self):
         for inst_p in self.inst_paragraphs:
