@@ -44,6 +44,7 @@ class WaxDropperOptions:
         "action": "add",
         "blob_size": 1.0,
         "paint_radius":2.0,
+        "depth_offset":0.0,
         "position": 9,
         "resolution":0.4,
         "surface_target": "object",  #object, object_wax
@@ -93,6 +94,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
         self.wax_obj, self.meta_obj = self.make_wax_base()
 
         destructive = "DESTRUCTIVE" # or "NON-DESTRUCTIVE"
+        self.last_updated_resolution = self.wax_opts["resolution"]
         self.net_ui_context = NetworkUIContext(self.context, bpy.context.object, geometry_mode=destructive)
         self.net_ui_context_wax = NetworkUIContext(self.context, self.wax_obj, geometry_mode=destructive)
         self.hint_bad = False   # draw obnoxious things over the bad segments
@@ -102,7 +104,6 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
         self.sketcher = self.SketchManager(self.input_net, self.spline_net, self.net_ui_context, self.network_cutter)
 
         self.brush = None
-        self.brush_radius = self.wax_opts["paint_radius"]
 
         def fn_get_pos_wrap(v):
             if type(v) is int: return v
@@ -241,5 +242,8 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
         old_data = self.wax_obj.data
         self.wax_obj.data = self.meta_obj.to_mesh(scn, apply_modifiers=True, settings='PREVIEW')
         bpy.data.meshes.remove(old_data)
+
+    def shift_along_normal(self, loc:Vector, norm:Vector):
+        return loc + vec_mult(Vector([self.wax_opts["blob_size"]*0.75]*3), norm) * self.wax_opts["depth_offset"]
 
     #############################################

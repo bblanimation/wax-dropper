@@ -27,17 +27,6 @@ from ..addon_common.common import ui
 from ..addon_common.common.decorators import PersistentOptions
 from ..functions import *
 
-@PersistentOptions()
-class WaxDropperOptions:
-    defaults = {
-        "action": "add",
-        "blob_size": 1.0,
-        "paint_radius":2.0,
-        "position": 9,
-        "resolution":0.4,
-        "surface_target": "object",  #object, object_wax
-    }
-
 
 class WaxDrop_States():
 
@@ -87,14 +76,6 @@ class WaxDrop_States():
     #--------------------------------------
     # sketching
 
-    @CookieCutter.FSM_State("sketching", "can enter")
-    def can_enter_sketching(self):
-        # if self.wax_opts["surface_target"] == "object":
-        #     return self.ray_cast_source_hit(self.actions.mouse)
-        # else:
-        #     # TODO: potentially check for ray cast hit on wax object
-        return True
-
     @CookieCutter.FSM_State("sketching", "enter")
     def enter_sketching(self):
         self.sketcher.add_loc(*self.actions.mouse)
@@ -130,12 +111,12 @@ class WaxDrop_States():
     # paint wait
 
     @CookieCutter.FSM_State('paint wait', 'enter')
-    def region_paint_wait_enter(self):
+    def enter_paint_wait(self):
         self.brush = self.PaintBrush(self.net_ui_context, radius=self.wax_opts["paint_radius"])
         self.brush_density()
 
     @CookieCutter.FSM_State('paint wait')
-    def region_paint_wait(self):
+    def modal_paint_wait(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
         if self.actions.pressed("remove wax"):
@@ -168,14 +149,8 @@ class WaxDrop_States():
     #--------------------------------------
     # painting
 
-    @CookieCutter.FSM_State('painting', 'can enter')
-    def region_painting_can_enter(self):
-        #any time really, may require a BVH update if
-        #network cutter has been executed
-        return True
-
     @CookieCutter.FSM_State('painting', 'enter')
-    def region_painting_enter(self):
+    def enter_painting(self):
         # set the cursor to to something
         # self.network_cutter.find_boundary_faces_cycles()
         self.click_enter_paint()
@@ -184,7 +159,7 @@ class WaxDrop_States():
         self.paint_dirty = False
 
     @CookieCutter.FSM_State('painting')
-    def region_painting(self):
+    def modal_painting(self):
         self.cursor_modal_set('PAINT_BRUSH')
 
 
@@ -196,12 +171,14 @@ class WaxDrop_States():
             # paint the particles
             spiral_points_3d = self.brush.spiral_points_to_3d(loc, norm)
             for loc0 in spiral_points_3d:
-                result, loc1, norm, _ = self.source.closest_point_on_mesh(loc0, distance= 2 * self.wax_opts["blob_size"])
+                result, loc1, norm1, _ = self.source.closest_point_on_mesh(loc0, distance= 2 * self.wax_opts["blob_size"])
                 # TODO: throw away results with normal facing away from view (backfaces)
-                #filter any snapping greater than the wax radius?
+                # TODO: filter any snapping greater than the wax radius?
+                loc1 = self.shift_along_normal(loc1, norm)
                 if result:
                     self.draw_wax(loc1)
 
+            loc = self.shift_along_normal(loc, norm)
             self.draw_wax(loc)
             self.push_meta_to_wax()
 
@@ -213,16 +190,11 @@ class WaxDrop_States():
             self.paint_dirty = False
             self.last_update = time.time()
 
-    @CookieCutter.FSM_State('painting', 'exit')
-    def region_painting_exit(self):
-        # TODO: finish the particle painting
-        pass
-
     # #--------------------------------------
     # # paint delete
     #
     # @CookieCutter.FSM_State('paint delete', 'enter')
-    # def region_unpaint_enter(self):
+    # def enter_unpaint(self):
     #     #set the cursor to to something
     #     # self.network_cutter.find_boundary_faces_cycles()
     #     self.click_enter_paint(delete = True)
@@ -231,7 +203,7 @@ class WaxDrop_States():
     #     self.paint_dirty = False
     #
     # @CookieCutter.FSM_State('paint delete')
-    # def region_unpaint(self):
+    # def modal_unpaint(self):
     #     self.cursor_modal_set('PAINT_BRUSH')
     #
     #     if self.actions.released('RIGHTMOUSE'):
@@ -249,7 +221,7 @@ class WaxDrop_States():
     #         self.last_update = time.time()
     #
     # @CookieCutter.FSM_State('paint delete', 'exit')
-    # def region_unpaint_exit(self):
+    # def exit_unpaint(self):
     #     # TODO: finish removing the particles
     #     pass
 

@@ -1739,7 +1739,7 @@ class UI_BoolValue(UI_Checkbox):
 
 
 class UI_Number(UI_Container):
-    def __init__(self, label, fn_get_value, fn_set_value, update_multiplier=0.1, fn_update_value=None, fn_formatter=None, fn_get_print_value=None, fn_set_print_value=None, margin=2, bgcolor=None, hovercolor=(1,1,1,0.1), presscolor=(0,0,0,0.2), **kwargs):
+    def __init__(self, label, fn_get_value, fn_set_value, update_multiplier=0.1, update_func=lambda: True, update_wax_on_mouse_up=False, fn_update_value=None, fn_formatter=None, fn_get_print_value=None, fn_set_print_value=None, margin=2, bgcolor=None, hovercolor=(1,1,1,0.1), presscolor=(0,0,0,0.2), **kwargs):
         assert (fn_get_print_value is None and fn_set_print_value is None) or (fn_get_print_value is not None and fn_set_print_value is not None)
         super().__init__(vertical=False, margin=margin, separation=4)
         self.defer_recalc = True
@@ -1747,6 +1747,8 @@ class UI_Number(UI_Container):
         self.fn_get_value = fn_get_value
         self.fn_set_value = fn_set_value
         self.update_multiplier = update_multiplier
+        self.update_func = update_func
+        print(self.update_func)
         self.fn_update_value = fn_update_value
         self.fn_formatter = fn_formatter
         self.fn_get_print_value = fn_get_print_value
@@ -1796,9 +1798,11 @@ class UI_Number(UI_Container):
 
     def mouse_up(self, mouse):
         self.downed = False
+        self.update_func()
 
     def mouse_cancel(self):
         self.fn_set_value(self.down_val)
+        self.update_func()
 
     def mouse_enter(self):
         self.hovering = True
@@ -1878,6 +1882,7 @@ class UI_Number(UI_Container):
                     v = self.val_orig
                 if self.fn_set_print_value: self.fn_set_print_value(v)
                 else: self.fn_set_value(v)
+                self.update_func()
                 return True
             if event.type == 'ESC':
                 self.captured = False

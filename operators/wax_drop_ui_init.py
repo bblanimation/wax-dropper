@@ -49,9 +49,13 @@ class WaxDrop_UI_Init():
         def get_resolution(): return self.wax_opts["resolution"]
         def get_resolution_print(): return "%0.3f" % self.wax_opts["resolution"]
         def set_resolution(v):
-            self.wax_opts["resolution"] = min(max(0.05, float(v)), 2.0)
+            self.wax_opts["resolution"] = round(min(max(0.05, float(v)), 2.0), 5)
             self.meta_obj.data.resolution = self.wax_opts["resolution"]
-            self.push_meta_to_wax()
+
+        def get_depth_offset(): return self.wax_opts["depth_offset"]
+        def get_depth_offset_print(): return "%0.3f" % self.wax_opts["depth_offset"]
+        def set_depth_offset(v): self.wax_opts["depth_offset"] = round(min(max(-1.0, float(v)), 1.0), 5)
+
         def get_action(): return self.wax_opts["action"]
         def set_action(v): self.wax_opts["action"] = v
 
@@ -68,17 +72,14 @@ class WaxDrop_UI_Init():
             # "remove wax series": "Shift + Right-click on the mesh to remove a series of connected wax balls",
         }
 
-        def mode_getter():
-            return self._state
-        def mode_setter(m):
-            self.fsm_change(m)
+        def mode_getter(): return self._state
+        def mode_setter(m): self.fsm_change(m)
 
-        def radius_getter():
-            return self.brush_radius
+        def radius_getter(): return self.wax_opts["paint_radius"]
         def radius_setter(v):
-            self.brush_radius = max(0.1, int(v*10)/10)
+            self.wax_opts["paint_radius"] = max(0.1, int(v*10)/10)
             if self.brush:
-                self.brush.radius = self.brush_radius
+                self.brush.radius = self.wax_opts["paint_radius"]
 
         win_tools = self.wm.create_window('Wax Dropper Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
 
@@ -106,7 +107,8 @@ class WaxDrop_UI_Init():
         opts = info.add(ui.UI_Frame('Tool Options'))
         opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
         # opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
-        opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_multiplier = 0.05))
+        opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_func=self.push_meta_to_wax, update_multiplier=0.05))
+        opts.add(ui.UI_Number("Depth Offset", get_depth_offset, set_depth_offset, update_multiplier=0.05))
         action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
         action.add_option("add")
         action.add_option("subtract")
