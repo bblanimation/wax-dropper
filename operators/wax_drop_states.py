@@ -178,7 +178,7 @@ class WaxDrop_States():
                 if result:
                     self.draw_wax(loc1)
 
-            # loc = self.shift_along_normal(loc, norm)
+            loc = self.shift_along_normal(loc, norm)
             self.draw_wax(loc)
             self.push_meta_to_wax()
 

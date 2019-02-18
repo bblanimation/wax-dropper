@@ -1748,7 +1748,6 @@ class UI_Number(UI_Container):
         self.fn_set_value = fn_set_value
         self.update_multiplier = update_multiplier
         self.update_func = update_func
-        print(self.update_func)
         self.fn_update_value = fn_update_value
         self.fn_formatter = fn_formatter
         self.fn_get_print_value = fn_get_print_value
