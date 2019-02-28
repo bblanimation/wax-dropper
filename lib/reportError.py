@@ -25,7 +25,7 @@ import addon_utils
 from bpy.props import StringProperty
 
 # Addon imports
-from ..functions import *
+from ..functions.common import *
 
 class SCENE_OT_report_error(bpy.types.Operator):
     """Report a bug via an automatically generated issue ticket"""              # blender will use this as a tooltip for menu items and buttons.

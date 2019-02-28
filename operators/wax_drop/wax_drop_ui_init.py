@@ -24,10 +24,10 @@ from bpy_extras import view3d_utils
 
 # Addon imports
 from .wax_drop_datastructure import InputPoint, SplineSegment, CurveNode
-from ..addon_common.cookiecutter.cookiecutter import CookieCutter
-from ..addon_common.common import ui
-from ..addon_common.common.blender import show_error_message
-from ..addon_common.common.ui import Drawing
+from ...addon_common.cookiecutter.cookiecutter import CookieCutter
+from ...addon_common.common import ui
+from ...addon_common.common.blender import show_error_message
+from ...addon_common.common.ui import Drawing
 
 
 class WaxDrop_UI_Init():

@@ -31,12 +31,12 @@ from .wax_drop_ui_init import *
 from .wax_drop_ui_tools import *
 from .wax_drop_ui_draw import *
 from .wax_drop_states import *
-from ..addon_common.cookiecutter.cookiecutter import CookieCutter
-from ..addon_common.common import ui
-from ..addon_common.common.bmesh_utils import BMeshSelectState, BMeshHideState
-from ..addon_common.common.maths import Point, Point2D, XForm
-from ..addon_common.common.decorators import PersistentOptions
-from ..functions import *
+from .functions import *
+from ...addon_common.cookiecutter.cookiecutter import CookieCutter
+from ...addon_common.common import ui
+from ...addon_common.common.bmesh_utils import BMeshSelectState, BMeshHideState
+from ...addon_common.common.maths import Point, Point2D, XForm
+from ...addon_common.common.decorators import PersistentOptions
 
 @PersistentOptions()
 class WaxDropperOptions:
@@ -51,11 +51,11 @@ class WaxDropperOptions:
     }
 
 
-class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDrop_States, CookieCutter):
+class OBJECT_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDrop_States, CookieCutter):
     """ Enter wax drop mode """
-    operator_id    = "wax.wax_drop"
+    operator_id    = "object.wax_drop"
 
-    bl_idname      = "wax.wax_drop"
+    bl_idname      = "object.wax_drop"
     bl_label       = "Wax Drop Mode"
     bl_description = "Enter wax drop mode"
     bl_space_type  = "VIEW_3D"
@@ -85,7 +85,8 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
         self.source = bpy.context.object
         if len(self.source.modifiers) > 0: apply_modifiers(self.source)
         # hide other objects
-        hide([obj for obj in scn.objects if obj != self.source])
+        self.unhidden_objects = [obj for obj in scn.objects if obj != self.source and not obj.hide]
+        hide(self.unhidden_objects)
 
         # get options for UI box
         self.wax_opts = WaxDropperOptions()
@@ -134,6 +135,7 @@ class WAX_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDro
 
     def end(self):
         """ Restore everything, because we're done """
+        unhide(self.unhidden_objects)
         self.manipulator_restore()
         self.header_text_restore()
         self.cursor_modal_restore()

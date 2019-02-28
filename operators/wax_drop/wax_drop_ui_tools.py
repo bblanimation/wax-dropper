@@ -13,25 +13,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# System imports
 import time
 import math
 import numpy
-import bmesh
+
+# Blender imports
 import bpy
+import bmesh
 import bgl
 from bpy_extras import view3d_utils
 from mathutils import Vector, kdtree, Color, Matrix
 from mathutils.geometry import intersect_point_line
 from mathutils.bvhtree import BVHTree
 
+# Addon imports
 from .wax_drop_datastructure import InputNetwork, InputPoint, InputSegment, SplineSegment, CurveNode
-from ..functions.rays import get_view_ray_data, ray_cast, ray_cast_path, ray_cast_bvh
-from ..functions.bmesh import edge_loops_from_bmedges_old, ensure_lookup, new_bmesh_from_bmelements, flood_selection_by_verts, flood_selection_edge_loop
-from ..functions.geodesic import geodesic_walk
-from ..functions.simplify import simplify_RDP
-from ..addon_common.common.utils import get_matrices
-from ..addon_common.common.maths import Point, Direction, XForm, space_evenly_on_path, get_path_length
-from ..addon_common.common.bezier import CubicBezierSpline
+from .functions import *
+from ...addon_common.common.utils import get_matrices
+from ...addon_common.common.maths import Point, Direction, XForm, space_evenly_on_path, get_path_length
+from ...addon_common.common.bezier import CubicBezierSpline
 
 class WaxDrop_UI_Tools():
     '''

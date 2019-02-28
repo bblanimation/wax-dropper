@@ -19,7 +19,6 @@
 import bpy
 import math
 from bpy.app.handlers import persistent
-from ..functions import *
 
 # @persistent
 # def handle_something(scn):
