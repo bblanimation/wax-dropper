@@ -97,7 +97,8 @@ class WaxDrop_States():
         # Simplify sketch into uniformly spaced locs
         new_locs = self.sketcher.finalize_uniform(self.context,
                                                   self.net_ui_context if self.wax_opts["surface_target"] == "object" else self.net_ui_context_wax,
-                                                  step_size=self.wax_opts["blob_size"] * 0.25,
+                                                  self.shift_along_normal,
+                                                  step_size=self.wax_opts["blob_size"] * 0.1,
                                                   error_threshold=0.1 * self.wax_opts["blob_size"])
         # add metaballs at uniformly spaced locs
         for loc in new_locs:

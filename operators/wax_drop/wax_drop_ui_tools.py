@@ -77,7 +77,7 @@ class WaxDrop_UI_Tools():
             if len(self.sketch) < 5 and self.net_ui_context.ui_type == 'DENSE_POLY': return False
             return True
 
-        def finalize_uniform(self, context, net_ui_context, step_size:float=0.5, error_threshold:float=0.25):
+        def finalize_uniform(self, context, net_ui_context, shift_func, step_size:float=0.5, error_threshold:float=0.25):
             """ finalizes sketch data uniformly """
             # get 3d points on mesh from screen-space sketch
             start = time.time()
@@ -85,9 +85,10 @@ class WaxDrop_UI_Tools():
             sketch_3d = []
             for pt in self.sketch:
                 view_vector, ray_origin, ray_target = get_view_ray_data(context, pt)  # location and direction in WORLD coordinates
-                loc, no, face_idx = ray_cast_bvh(net_ui_context.bvh, net_ui_context.imx, ray_origin, ray_target, None)
+                loc, norm, face_idx = ray_cast_bvh(net_ui_context.bvh, net_ui_context.imx, ray_origin, ray_target, None)
                 if face_idx != None:
-                    sketch_3d += [net_ui_context.mx * loc]
+                    new_loc = net_ui_context.mx * shift_func(loc, norm)
+                    sketch_3d.append(new_loc)
 
             finish = time.time()
             print('ray cast in %f' % (finish-start))
