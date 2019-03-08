@@ -114,6 +114,7 @@ class OBJECT_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Wax
             return tuple(v)
         fn_pos = self.wax_opts.gettersetter("position", fn_get_wrap=fn_get_pos_wrap, fn_set_wrap=fn_set_pos_wrap)
         self.ui_setup()
+        self.override_defaults()
 
     def end_commit(self):
         """ Commit changes to mesh! """
@@ -247,5 +248,8 @@ class OBJECT_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, Wax
 
     def shift_along_normal(self, loc:Vector, norm:Vector):
         return loc + vec_mult(Vector([self.wax_opts["blob_size"]*0.75]*3), norm) * self.wax_opts["depth_offset"]
+
+    def override_defaults(self):
+        pass
 
     #############################################

@@ -90,10 +90,6 @@ class WaxDrop_UI_Init():
         wax_mode.add_option('Sketch', value='sketch wait')
         wax_mode.add_option('Paint', value='paint wait')
 
-
-        #container.add(ui.UI_Button('Compute Cut', lambda:self.fsm_change('segmentation'), align=-1, icon=ui.UI_Image('divide32.png', width=32, height=32)))
-        #container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
-
         segmentation_container = win_tools.add(ui.UI_Container())
         container = segmentation_container.add(ui.UI_Frame('Wax Dropper Tools'))
         container.add(ui.UI_Button('Commit', self.done, align=0))
@@ -102,6 +98,7 @@ class WaxDrop_UI_Init():
         info = self.wm.create_window('Wax Dropper Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
         info.add(ui.UI_Label('Instructions', align=0, margin=4))
         self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(5)]
+        self.set_ui_text()
         #for i in self.inst_paragraphs: i.visible = False
         #self.ui_instructions = info.add(ui.UI_Markdown('test', min_size=(200,200)))
         opts = info.add(ui.UI_Frame('Tool Options'))
@@ -119,10 +116,6 @@ class WaxDrop_UI_Init():
         surface.add_option("wax on wax")
         surface.add_option("scene")
 
-        self.set_ui_text()
-
-
-    # XXX: Fine for now, but will likely be irrelevant in future
     def set_ui_text(self):
         ''' sets the viewports text '''
         self.reset_ui_text()

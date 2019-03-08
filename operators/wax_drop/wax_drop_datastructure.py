@@ -32,7 +32,7 @@ from bpy_extras import view3d_utils
 # Addon imports
 from .functions import *
 from ...addon_common.common.utils import get_matrices
-from ...addon_common.common.bezier import CubicBezier, CubicBezierSpline, CompositeSmoothCubicBezierSpline
+from ...addon_common.common.bezier import CubicBezier, CubicBezierSpline
 from ...addon_common.common.shaders import circleShader
 from ...addon_common.common.profiler import profiler
 
