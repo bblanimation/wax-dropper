@@ -23,11 +23,11 @@ import bpy
 from bpy.types import Panel
 
 
-class WAXDROP_PT_interface(Panel):
+class VIEW3D_PT_tools_wax_dropper(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Wax Dropper Interface"
-    bl_idname      = "VIEW3D_PT_tools_wax_interface"
+    bl_idname      = "VIEW3D_PT_tools_wax_dropper"
     bl_context     = "objectmode"
     bl_category    = "Wax Dropper"
 
@@ -49,4 +49,4 @@ class WAXDROP_PT_interface(Panel):
             row.operator("scene.close_report_error", text="", icon="PANEL_CLOSE").addon_name = "Wax Dropper"
 
         col = layout.column(align=True)
-        col.operator("object.wax_drop")
+        col.operator("object.wax_dropper")

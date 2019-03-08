@@ -15,4 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from .bmesh import *
+from .colors import *
 from .common import *
+from .common_drawing import *
+from .cut_algorithms import *
+from .general import *
+from .geodesic import *
+from .rays import *
+from .simplify import *

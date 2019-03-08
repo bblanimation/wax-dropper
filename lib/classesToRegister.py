@@ -22,6 +22,6 @@ from ..operators import *
 
 classes = [
     WAXDROP_PT_preferences,
-    WAXDROP_PT_interface,
-    OBJECT_OT_wax_drop,
+    VIEW3D_PT_tools_wax_dropper,
+    wax_dropper.OBJECT_OT_wax_dropper,
 ]

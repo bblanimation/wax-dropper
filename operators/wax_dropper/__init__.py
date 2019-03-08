@@ -31,7 +31,7 @@ from .wax_drop_ui_init import *
 from .wax_drop_ui_tools import *
 from .wax_drop_ui_draw import *
 from .wax_drop_states import *
-from .functions import *
+from ...functions import *
 from ...addon_common.cookiecutter.cookiecutter import CookieCutter
 from ...addon_common.common import ui
 from ...addon_common.common.bmesh_utils import BMeshSelectState, BMeshHideState
@@ -51,11 +51,10 @@ class WaxDropperOptions:
     }
 
 
-class OBJECT_OT_wax_drop(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDrop_States, CookieCutter):
+class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDrop_States, CookieCutter):
     """ Enter wax drop mode """
-    operator_id    = "object.wax_drop"
-
-    bl_idname      = "object.wax_drop"
+    operator_id    = "object.wax_dropper"
+    bl_idname      = "object.wax_dropper"
     bl_label       = "Wax Drop Mode"
     bl_description = "Enter wax drop mode"
     bl_space_type  = "VIEW_3D"

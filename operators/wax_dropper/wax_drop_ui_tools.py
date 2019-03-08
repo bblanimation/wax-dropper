@@ -29,7 +29,7 @@ from mathutils.bvhtree import BVHTree
 
 # Addon imports
 from .wax_drop_datastructure import InputNetwork, InputPoint, InputSegment, SplineSegment, CurveNode
-from .functions import *
+from ...functions import *
 from ...addon_common.common.utils import get_matrices
 from ...addon_common.common.maths import Point, Direction, XForm, space_evenly_on_path, get_path_length
 from ...addon_common.common.bezier import CubicBezierSpline
@@ -91,14 +91,14 @@ class WaxDrop_UI_Tools():
                     sketch_3d.append(new_loc)
 
             finish = time.time()
-            print('ray cast in %f' % (finish-start))
+            # print('ray cast in %f' % (finish-start))
             start = finish
             # slice over sketch_3d to get simplified points
             #TODO error threshold should be related to particle size.  Eg .1 # self.blob_size
             important_idxs = simplify_RDP(sketch_3d, error_threshold)
 
             finish = time.time()
-            print('found important verts in %f' % (finish-start))
+            # print('found important verts in %f' % (finish-start))
             start = finish
 
             # get important locations from important indices in sketch_3d
@@ -109,7 +109,7 @@ class WaxDrop_UI_Tools():
             new_locs = space_evenly_on_path(locs, segments=int(get_path_length(locs)/step_size))
 
             finish = time.time()
-            print('spaced evenly on path in %f' % (finish-start))
+            # print('spaced evenly on path in %f' % (finish-start))
             start = finish
 
             # returns evenly spaced locs along sketch

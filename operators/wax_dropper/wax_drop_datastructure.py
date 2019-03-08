@@ -30,7 +30,7 @@ from mathutils.geometry import intersect_point_line, intersect_line_plane
 from bpy_extras import view3d_utils
 
 # Addon imports
-from .functions import *
+from ...functions import *
 from ...addon_common.common.utils import get_matrices
 from ...addon_common.common.bezier import CubicBezier, CubicBezierSpline
 from ...addon_common.common.shaders import circleShader
@@ -4169,7 +4169,7 @@ class NetworkUIContext():
         self.bvh = BVHTree.FromBMesh(self.bme)
         finish = time.time()
 
-        print('took %f seconds to build BVH' % (finish-start))
+        # print('took %f seconds to build BVH' % (finish-start))
         self.mx, self.imx = get_matrices(self.ob)
         self.mx_norm = self.imx.transposed().to_3x3() #local directions to global
         self.imx_norm = self.imx.to_3x3() #global direction to local
