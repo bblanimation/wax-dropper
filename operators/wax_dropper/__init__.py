@@ -52,11 +52,11 @@ class WaxDropperOptions:
 
 
 class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDrop_States, CookieCutter):
-    """ Enter wax drop mode """
+    """ Paint and sketch on target object with metaballs """
     operator_id    = "object.wax_dropper"
     bl_idname      = "object.wax_dropper"
-    bl_label       = "Wax Drop Mode"
-    bl_description = "Enter wax drop mode"
+    bl_label       = "Wax Dropper"
+    bl_description = "Paint and sketch on target object with metaballs"
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
 
@@ -113,7 +113,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
             return tuple(v)
         fn_pos = self.wax_opts.gettersetter("position", fn_get_wrap=fn_get_pos_wrap, fn_set_wrap=fn_set_pos_wrap)
         self.ui_setup()
-        self.override_defaults()
+        self.start_post()
 
     def end_commit(self):
         """ Commit changes to mesh! """
@@ -248,7 +248,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
     def shift_along_normal(self, loc:Vector, norm:Vector):
         return loc + vec_mult(Vector([self.wax_opts["blob_size"]*0.75]*3), norm) * self.wax_opts["depth_offset"]
 
-    def override_defaults(self):
+    def start_post(self):
         pass
 
     #############################################
