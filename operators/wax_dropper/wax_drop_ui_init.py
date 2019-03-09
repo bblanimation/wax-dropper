@@ -92,6 +92,7 @@ class WaxDrop_UI_Init():
 
         segmentation_container = win_tools.add(ui.UI_Container())
         container = segmentation_container.add(ui.UI_Frame('Wax Dropper Tools'))
+        container.add(ui.UI_Button('Fuse and Continue', self.fuse_and_continue, align=0))
         container.add(ui.UI_Button('Commit', self.done, align=0))
         container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 

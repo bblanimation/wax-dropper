@@ -85,7 +85,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
         if len(self.source.modifiers) > 0: apply_modifiers(self.source)
         # hide other objects
         self.unhidden_objects = [obj for obj in scn.objects if obj != self.source and not obj.hide]
-        hide(self.unhidden_objects)
+        [hide(obj) for obj in self.unhidden_objects]
 
         # get options for UI box
         self.wax_opts = WaxDropperOptions()
@@ -117,10 +117,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
     def end_commit(self):
         """ Commit changes to mesh! """
-        scn = bpy.context.scene
-
         self.remove_meta_wax()
-
         if self.wax_opts["action"] != "none":
             # add/subtract wax object to/from source
             jmod = self.source.modifiers.new('Join Wax', type='BOOLEAN')
@@ -135,7 +132,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
     def end(self):
         """ Restore everything, because we're done """
-        unhide(self.unhidden_objects)
+        [unhide(obj) for obj in self.unhidden_objects]
         self.manipulator_restore()
         self.header_text_restore()
         self.cursor_modal_restore()
@@ -247,6 +244,12 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
     def shift_along_normal(self, loc:Vector, norm:Vector):
         return loc + vec_mult(Vector([self.wax_opts["blob_size"]*0.75]*3), norm) * self.wax_opts["depth_offset"]
+
+    def fuse_and_continue(self):
+        """ apply currently drawn wax to source object """
+        self.end_commit()
+        self.wax_obj, self.meta_obj = self.make_wax_base()
+
 
     def start_post(self):
         pass
