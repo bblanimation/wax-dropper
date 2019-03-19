@@ -108,7 +108,7 @@ class WaxDrop_UI_Init():
                                       'bgcolor':(0.50, 0.50, 0.50, 0.90)})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
         
         collapse_container = info.add(ui.UI_Collapsible('Instructions     ', collapsed = False))
-        self.inst_paragraphs = [collapse_container.add(ui.UI_Markdown('', min_size=(100,10))) for i in range(5)]
+        self.inst_paragraphs = [collapse_container.add(ui.UI_Markdown('', min_size=(100,10), max_size = (250, 20))) for i in range(5)]
         self.set_ui_text()
         #for i in self.inst_paragraphs: i.visible = False
         #self.ui_instructions = info.add(ui.UI_Markdown('test', min_size=(200,200)))
