@@ -81,24 +81,34 @@ class WaxDrop_UI_Init():
             if self.brush:
                 self.brush.radius = self.wax_opts["paint_radius"]
 
+
+        #UPPER LEFT WINDOW, Sketch/Paint Mode
+        #COMMIT/COMMIT and CONTINUE/COMMIT
         win_tools = self.wm.create_window('Wax Dropper Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
 
-        precut_container = win_tools.add(ui.UI_Container()) # TODO: make this rounded
+        mode_container = win_tools.add(ui.UI_Container()) # TODO: make this rounded
 
-        container = precut_container.add(ui.UI_Frame('Wax Drop Mode'))
-        wax_mode = container.add(ui.UI_Options(mode_getter, mode_setter, separation=0))
+        mode_frame = mode_container.add(ui.UI_Frame('Wax Drop Mode'))
+        wax_mode = mode_frame.add(ui.UI_Options(mode_getter, mode_setter, separation=0))
         wax_mode.add_option('Sketch', value='sketch wait')
         wax_mode.add_option('Paint', value='paint wait')
 
-        segmentation_container = win_tools.add(ui.UI_Container())
-        container = segmentation_container.add(ui.UI_Frame('Wax Dropper Tools'))
-        container.add(ui.UI_Button('Fuse and Continue', self.fuse_and_continue, align=0))
-        container.add(ui.UI_Button('Commit', self.done, align=0))
-        container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
+        finish_container = win_tools.add(ui.UI_Container())
+        finish_frame = finish_container.add(ui.UI_Frame('Finish Tools'))
+        finish_frame.add(ui.UI_Button('Fuse and Continue', self.fuse_and_continue, align=0))
+        finish_frame.add(ui.UI_Button('Commit', self.done, align=0))
+        finish_frame.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 
-        info = self.wm.create_window('Wax Dropper Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
-        info.add(ui.UI_Label('Instructions', align=0, margin=4))
-        self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(5)]
+        #####################################
+        ### Collapsible Help and Options   ##
+        #####################################
+        info = self.wm.create_window('Wax Dropper Help', 
+                                     {'pos':9, 
+                                      'movable':True, 
+                                      'bgcolor':(0.50, 0.50, 0.50, 0.90)})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
+        
+        collapse_container = info.add(ui.UI_Collapsible('Instructions     ', collapsed = False))
+        self.inst_paragraphs = [collapse_container.add(ui.UI_Markdown('', min_size=(100,10))) for i in range(5)]
         self.set_ui_text()
         #for i in self.inst_paragraphs: i.visible = False
         #self.ui_instructions = info.add(ui.UI_Markdown('test', min_size=(200,200)))
@@ -107,12 +117,12 @@ class WaxDrop_UI_Init():
         # opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
         opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_func=self.push_meta_to_wax, update_multiplier=0.05))
         opts.add(ui.UI_Number("Depth Offset", get_depth_offset, set_depth_offset, update_multiplier=0.05))
-        action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
+        action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=True))
         action.add_option("add")
         action.add_option("subtract")
         action.add_option("none")
 
-        surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
+        surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=True))
         surface.add_option("object")
         surface.add_option("wax on wax")
         surface.add_option("scene")
@@ -121,7 +131,8 @@ class WaxDrop_UI_Init():
         ''' sets the viewports text '''
         self.reset_ui_text()
         for i,val in enumerate(['place wax', 'change state', 'sketch', 'paint', 'remove wax']):
-            self.inst_paragraphs[i].set_markdown(chr(65 + i) + ") " + self.instructions[val])
+            #self.inst_paragraphs[i].set_markdown(chr(65 + i) + ") " + self.instructions[val])
+            self.inst_paragraphs[i].set_markdown("-" + self.instructions[val])
 
     def reset_ui_text(self):
         for inst_p in self.inst_paragraphs:
