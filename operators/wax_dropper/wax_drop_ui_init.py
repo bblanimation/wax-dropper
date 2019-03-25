@@ -81,41 +81,41 @@ class WaxDrop_UI_Init():
             if self.brush:
                 self.brush.radius = self.wax_opts["paint_radius"]
 
-        win_tools = self.wm.create_window('Wax Dropper Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
+        self.tools_panel = self.wm.create_window('Wax Dropper Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
 
-        precut_container = win_tools.add(ui.UI_Container()) # TODO: make this rounded
+        precut_container = self.tools_panel.add(ui.UI_Container()) # TODO: make this rounded
 
-        container = precut_container.add(ui.UI_Frame('Wax Drop Mode'))
-        wax_mode = container.add(ui.UI_Options(mode_getter, mode_setter, separation=0))
-        wax_mode.add_option('Sketch', value='sketch wait')
-        wax_mode.add_option('Paint', value='paint wait')
+        self.mode_frame = precut_container.add(ui.UI_Frame('Wax Drop Mode'))
+        self.mode_options = self.mode_frame.add(ui.UI_Options(mode_getter, mode_setter, separation=0))
+        self.mode_options.add_option('Sketch', value='sketch wait')
+        self.mode_options.add_option('Paint', value='paint wait')
 
-        segmentation_container = win_tools.add(ui.UI_Container())
-        container = segmentation_container.add(ui.UI_Frame('Wax Dropper Tools'))
-        container.add(ui.UI_Button('Fuse and Continue', self.fuse_and_continue, align=0))
-        container.add(ui.UI_Button('Commit', self.done, align=0))
-        container.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
+        segmentation_container = self.tools_panel.add(ui.UI_Container())
+        self.tools_frame = segmentation_container.add(ui.UI_Frame('Wax Dropper Tools'))
+        self.fuse_and_continue_button = self.tools_frame.add(ui.UI_Button('Fuse and Continue', self.fuse_and_continue, align=0))
+        self.commit_button = self.tools_frame.add(ui.UI_Button('Commit', self.done, align=0))
+        self.cancel_button = self.tools_frame.add(ui.UI_Button('Cancel', lambda:self.done(cancel=True), align=0))
 
-        info = self.wm.create_window('Wax Dropper Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
-        info.add(ui.UI_Label('Instructions', align=0, margin=4))
-        self.inst_paragraphs = [info.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(5)]
+        self.info_panel = self.wm.create_window('Wax Dropper Help', {'pos':9, 'movable':True})#, 'bgcolor':(0.30, 0.60, 0.30, 0.90)})
+        self.info_panel.add(ui.UI_Label('Instructions', align=0, margin=4))
+        self.inst_paragraphs = [self.info_panel.add(ui.UI_Markdown('', min_size=(200,10))) for i in range(5)]
         self.set_ui_text()
         #for i in self.inst_paragraphs: i.visible = False
         #self.ui_instructions = info.add(ui.UI_Markdown('test', min_size=(200,200)))
-        opts = info.add(ui.UI_Frame('Tool Options'))
-        opts.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
+        self.options_frame = self.info_panel.add(ui.UI_Frame('Tool Options'))
+        self.options_frame.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
         # opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
-        opts.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_func=self.push_meta_to_wax, update_multiplier=0.05))
-        opts.add(ui.UI_Number("Depth Offset", get_depth_offset, set_depth_offset, update_multiplier=0.05))
-        action = opts.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
-        action.add_option("add")
-        action.add_option("subtract")
-        action.add_option("none")
+        self.options_frame.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_func=self.push_meta_to_wax, update_multiplier=0.05))
+        self.options_frame.add(ui.UI_Number("Depth Offset", get_depth_offset, set_depth_offset, update_multiplier=0.05))
+        self.wax_action_options = self.options_frame.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=False))
+        self.wax_action_options.add_option("add")
+        self.wax_action_options.add_option("subtract")
+        self.wax_action_options.add_option("none")
 
-        surface = opts.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
-        surface.add_option("object")
-        surface.add_option("wax on wax")
-        surface.add_option("scene")
+        self.wax_surface_options = self.options_frame.add(ui.UI_Options(get_surface_target, set_surface_target, label="Surface: ", vertical=False))
+        self.wax_surface_options.add_option("object")
+        self.wax_surface_options.add_option("wax on wax")
+        self.wax_surface_options.add_option("scene")
 
     def set_ui_text(self):
         ''' sets the viewports text '''

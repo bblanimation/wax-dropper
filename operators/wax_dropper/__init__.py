@@ -67,7 +67,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
     def can_start(cls, context):
         """ Start only if editing a mesh """
         ob = context.active_object
-        return ob and ob.type == "MESH"
+        return ob is not None and ob.type == "MESH"
 
     def start(self):
         """ initialization function """
@@ -113,6 +113,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
             return tuple(v)
         fn_pos = self.wax_opts.gettersetter("position", fn_get_wrap=fn_get_pos_wrap, fn_set_wrap=fn_set_pos_wrap)
         self.ui_setup()
+        self.ui_setup_post()
         self.start_post()
 
     def end_commit(self):
@@ -125,6 +126,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
             jmod.object = self.wax_obj
             apply_modifiers(self.source)
             self.remove_wax_blobs()
+        self.end_commit_post()
 
     def end_cancel(self):
         """ Cancel changes """
@@ -251,7 +253,16 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
         self.wax_obj, self.meta_obj = self.make_wax_base()
 
 
+    #############################################
+    # Subclassing functions
+
+    def ui_setup_post(self):
+        pass
+
     def start_post(self):
+        pass
+
+    def end_commit_post(self):
         pass
 
     #############################################
