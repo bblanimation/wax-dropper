@@ -80,6 +80,7 @@ class WaxDrop_States():
     def enter_sketching(self):
         self.sketcher.add_loc(*self.actions.mouse)
         if self.wax_opts["surface_target"] == "object_wax":
+            self.net_ui_context_wax.update_bme()
             self.net_ui_context_wax.update_bvh()
 
     @CookieCutter.FSM_State("sketching")

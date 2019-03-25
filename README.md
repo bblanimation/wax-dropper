@@ -27,7 +27,7 @@
             self.tools_panel
                 self.mode_frame
                     self.mode_options
-                self.tools_frame
+                self.finish_frame
                     self.fuse_and_continue_button
                     self.commit_button
                     self.cancel_button

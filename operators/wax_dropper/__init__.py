@@ -251,7 +251,8 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
         """ apply currently drawn wax to source object """
         self.end_commit()
         self.wax_obj, self.meta_obj = self.make_wax_base()
-
+        self.net_ui_context.update_bme()
+        self.net_ui_context.update_bvh()
 
     #############################################
     # Subclassing functions

@@ -4203,6 +4203,15 @@ class NetworkUIContext():
         print(self.closest_ep)
         print(self.hovered_near)
 
+    
+    def update_bme(self):
+        
+        self.bme.clear()
+        self.bme.from_mesh(self.ob.data)
+        self.bme.verts.ensure_lookup_table()
+        self.bme.edges.ensure_lookup_table()
+        self.bme.faces.ensure_lookup_table()
+        
     def update_bvh(self):
 
         start = time.time()
