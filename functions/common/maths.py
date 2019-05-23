@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Christopher Gearhart
+# Copyright (C) 2019 Christopher Gearhart
 # chris@bblanimation.com
 # http://bblanimation.com/
 #
@@ -21,7 +21,7 @@
 # Blender imports
 from mathutils import Matrix, Vector
 
-# module imports
+# Module imports
 from .wrappers import blender_version_wrapper
 
 
@@ -30,14 +30,14 @@ def mathutils_mult(*argv):
     """ elementwise multiplication for vectors, matrices, etc. """
     result = argv[0]
     for arg in argv[1:]:
-        result = arg * result
+        result = result * arg
     return result
 @blender_version_wrapper('>=','2.80')
 def mathutils_mult(*argv):
     """ elementwise multiplication for vectors, matrices, etc. """
     result = argv[0]
     for arg in argv[1:]:
-        result = arg @ result
+        result = result @ arg
     return result
 
 

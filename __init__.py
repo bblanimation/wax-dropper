@@ -19,7 +19,7 @@ bl_info = {
     "name"        : "Wax Dropper",
     "author"      : "Christopher Gearhart <chris@bblanimation.com>",
     "version"     : (1, 0, 0),
-    "blender"     : (2, 79, 0),
+    "blender"     : (2, 80, 0),
     "description" : "",
     "location"    : "View3D > Tools > Wax Dropper",
     "warning"     : "",  # used for warning icon and text in addons panel

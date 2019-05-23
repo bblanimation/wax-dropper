@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Christopher Gearhart
+# Copyright (C) 2019 Christopher Gearhart
 # chris@bblanimation.com
 # http://bblanimation.com/
 #
@@ -30,9 +30,10 @@ try:
 except ImportError:
     ViewLayer = None
 
-# module imports
+# Module imports
 from .python_utils import confirmIter, confirmList
 from .wrappers import blender_version_wrapper
+from .reporting import b280
 
 
 #################### PREFERENCES ####################
@@ -50,9 +51,23 @@ def get_addon_preferences():
     """ get preferences for current addon """
     if not hasattr(get_addon_preferences, 'prefs'):
         folderpath, foldername = os.path.split(get_addon_directory())
+        addons = get_preferences().addons
         if not addons[foldername].preferences: return None
         get_addon_preferences.prefs = addons[foldername].preferences
     return get_addon_preferences.prefs
+
+
+def get_addon_directory():
+    """ get root directory of current addon """
+    addons = get_preferences().addons
+    folderpath = os.path.dirname(os.path.abspath(__file__))
+    while folderpath:
+        folderpath,foldername = os.path.split(folderpath)
+        if foldername in {'common','functions','addons'}: continue
+        if foldername in addons: break
+    else:
+        raise NameError("Did not find addon directory")
+    return os.path.join(folderpath, foldername)
 
 
 #################### OBJECTS ####################
@@ -82,16 +97,10 @@ def duplicate(obj:Object, linked:bool=False, link_to_scene:bool=False):
 
 @blender_version_wrapper('<=','2.79')
 def setActiveObj(obj:Object, scene:Scene=None):
-    if obj is None:
-        return
-    assert type(obj) == Object
     scene = scene or bpy.context.scene
     scene.objects.active = obj
 @blender_version_wrapper('>=','2.80')
 def setActiveObj(obj:Object, view_layer:ViewLayer=None):
-    if obj is None:
-        return
-    assert type(obj) == Object
     view_layer = view_layer or bpy.context.view_layer
     view_layer.objects.active = obj
 
@@ -170,25 +179,22 @@ def deselectAll():
 @blender_version_wrapper('>=','2.80')
 def deselectAll():
     """ deselects all objs in scene """
-    try:
-        selected_objects = bpy.context.selected_objects
-    except AttributeError:
-        selected_objects = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
+    selected_objects = bpy.context.selected_objects if hasattr(bpy.context, "selected_objects") else [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
     deselect(selected_objects)
 
 
 @blender_version_wrapper('<=','2.79')
 def hide(obj:Object, viewport:bool=True, render:bool=True):
-    if obj.hide and viewport:
+    if not obj.hide and viewport:
         obj.hide = True
-    if obj.hide_render and render:
-        obj.hide_viewport = True
+    if not obj.hide_render and render:
+        obj.hide_render = True
 @blender_version_wrapper('>=','2.80')
 def hide(obj:Object, viewport:bool=True, render:bool=True):
-    if obj.hide_viewport and viewport:
+    if not obj.hide_viewport and viewport:
         obj.hide_viewport = True
-    if obj.hide_render and render:
-        obj.hide_viewport = True
+    if not obj.hide_render and render:
+        obj.hide_render = True
 
 
 @blender_version_wrapper('<=','2.79')
@@ -196,13 +202,13 @@ def unhide(obj:Object, viewport:bool=True, render:bool=True):
     if obj.hide and viewport:
         obj.hide = False
     if obj.hide_render and render:
-        obj.hide_render= False
+        obj.hide_render = False
 @blender_version_wrapper('>=','2.80')
 def unhide(obj:Object, viewport:bool=True, render:bool=True):
     if obj.hide_viewport and viewport:
         obj.hide_viewport = False
     if obj.hide_render and render:
-        obj.hide_render= False
+        obj.hide_render = False
 
 
 @blender_version_wrapper('>=','2.80')
@@ -218,11 +224,13 @@ def isObjVisibleInViewport(obj:Object):
 
 
 @blender_version_wrapper('<=','2.79')
-def link_object(o:Object):
-    bpy.context.scene.objects.link(o)
+def link_object(o:Object, scene:Scene=None):
+    scene = scene or bpy.context.scene
+    scene.objects.link(o)
 @blender_version_wrapper('>=','2.80')
-def link_object(o:Object):
-    bpy.context.scene.collection.objects.link(o)
+def link_object(o:Object, scene:Scene=None):
+    scene = scene or bpy.context.scene
+    scene.collection.objects.link(o)
 
 
 @blender_version_wrapper('<=','2.79')
@@ -235,31 +243,44 @@ def unlink_object(o:Object):
 
 
 @blender_version_wrapper('<=','2.79')
-def safeLink(obj:Object, protect:bool=False):
-    scn = bpy.context.scene
-    link_object(obj)
-    obj.protected = protect
+def safeLink(obj:Object, protect:bool=False, collections=None):
+    # link object to scene
+    try:
+        link_object(obj)
+    except RuntimeError:
+        pass
+    # remove fake user from object data
     obj.use_fake_user = False
+    # protect object from deletion (useful in Bricker addon)
+    if hasattr(obj, "protected"):
+        obj.protected = protect
 @blender_version_wrapper('>=','2.80')
 def safeLink(obj:Object, protect:bool=False, collections=None):
-    collections = collections or [scn.collection]
+    # link object to target collections (scene collection by default)
+    collections = collections or [bpy.context.scene.collection]
     for coll in collections:
         try:
             coll.objects.link(obj)
         except RuntimeError:
             continue
-    obj.protected = protect
+    # remove fake user from object data
     obj.use_fake_user = False
+    # protect object from deletion (useful in Bricker addon)
+    if hasattr(obj, "protected"):
+        obj.protected = protect
 
 
 def safeUnlink(obj:Object, protect:bool=True):
-    scn = bpy.context.scene
+    # unlink object from scene
     try:
         unlink_object(obj)
     except RuntimeError:
         pass
-    obj.protected = protect
+    # prevent object data from being tossed on Blender exit
     obj.use_fake_user = True
+    # protect object from deletion (useful in Bricker addon)
+    if hasattr(obj, "protected"):
+        obj.protected = protect
 
 
 def copyAnimationData(source:Object, target:Object):
@@ -287,9 +308,19 @@ def insertKeyframes(objs, keyframeType:str, frame:int, if_needed:bool=False):
         inserted = obj.keyframe_insert(data_path=keyframeType, frame=frame, options=options)
 
 
-def apply_modifiers(obj:Object, settings:str="PREVIEW"):
+@blender_version_wrapper("<=", "2.79")
+def new_mesh_from_object(obj:Object):
+    return bpy.data.meshes.new_from_object(bpy.context.scene, obj, apply_modifiers=True, settings="PREVIEW")
+@blender_version_wrapper(">=", "2.80")
+def new_mesh_from_object(obj:Object):
+    depsgraph = bpy.context.view_layer.depsgraph
+    obj_eval = depsgraph.objects.get(obj.name, None)
+    return bpy.data.meshes.new_from_object(obj_eval)
+
+
+def apply_modifiers(obj:Object):
     """ apply modifiers to object """
-    m = obj.to_mesh(bpy.context.scene, True, "PREVIEW")
+    m = new_mesh_from_object(obj)
     obj.modifiers.clear()
     obj.data = m
 
@@ -320,18 +351,12 @@ def is_adaptive(ob:Object):
 def tag_redraw_areas(areaTypes:iter=["ALL"]):
     """ run tag_redraw for given area types """
     areaTypes = confirmList(areaTypes)
-    for area in bpy.context.screen.areas:
-        for areaType in areaTypes:
-            if areaType == "ALL" or area.type == areaType:
-                area.tag_redraw()
-
-
-def tag_redraw_viewport_in_all_screens():
-    """redraw the 3D viewport in all screens (bypasses bpy.context.screen)"""
-    for screen in bpy.data.screens:
+    screens = [bpy.context.screen] if bpy.context.screen else bpy.data.screens
+    for screen in screens:
         for area in screen.areas:
-            if area.type == "VIEW_3D":
-                area.tag_redraw()
+            for areaType in areaTypes:
+                if areaType == "ALL" or area.type == areaType:
+                    area.tag_redraw()
 
 
 @blender_version_wrapper("<=", "2.79")
@@ -359,6 +384,24 @@ def changeContext(context, areaType:str):
     lastAreaType = context.area.type
     context.area.type = areaType
     return lastAreaType
+
+
+def AssembleOverrideContextForView3dOps():
+    """
+    Iterates through the blender GUI's areas & regions to find the View3D space
+    NOTE: context override can only be used with bpy.ops that were called from a window/screen with a view3d space
+    """
+    win      = bpy.context.window
+    scr      = win.screen
+    areas3d  = [area for area in scr.areas if area.type == 'VIEW_3D']
+    region   = [region for region in areas3d[0].regions if region.type == 'WINDOW']
+    override = {'window':win,
+                'screen':scr,
+                'area'  :areas3d[0],
+                'region':region[0],
+                'scene' :bpy.context.scene,
+                }
+    return override
 
 
 @blender_version_wrapper('<=','2.79')
@@ -412,6 +455,14 @@ def smoothMeshFaces(faces:iter):
 #################### OTHER ####################
 
 
+@blender_version_wrapper('<=','2.79')
+def update_depsgraph():
+    bpy.context.scene.update()
+@blender_version_wrapper('>=','2.80')
+def update_depsgraph():
+    bpy.context.view_layer.depsgraph.update()
+
+
 def getItemByID(collection:bpy.types.CollectionProperty, id:int):
     """ get UIlist item from collection with given id """
     success = False
@@ -420,3 +471,60 @@ def getItemByID(collection:bpy.types.CollectionProperty, id:int):
             success = True
             break
     return item if success else None
+
+
+@blender_version_wrapper('<=','2.79')
+def layout_split(layout, align=True, factor=0.5):
+    return layout.split(align=align, percentage=factor)
+@blender_version_wrapper('>=','2.80')
+def layout_split(layout, align=True, factor=0.5):
+    return layout.split(align=align, factor=factor)
+
+
+@blender_version_wrapper('<=','2.79')
+def bpy_collections():
+    return bpy.data.groups
+@blender_version_wrapper('>=','2.80')
+def bpy_collections():
+    return bpy.data.collections
+
+
+@blender_version_wrapper('<=','2.79')
+def set_active_scene(scene:Scene):
+    bpy.context.screen.scene = scene
+@blender_version_wrapper('>=','2.80')
+def set_active_scene(scene:Scene):
+    bpy.context.window.scene = scene
+
+@blender_version_wrapper('<=','2.79')
+def get_cursor_location():
+    return bpy.context.scene.cursor_location
+@blender_version_wrapper('>=','2.80')
+def get_cursor_location():
+    return bpy.context.scene.cursor.location
+
+
+@blender_version_wrapper('<=','2.79')
+def set_cursor_location(loc:tuple):
+    bpy.context.scene.cursor_location = loc
+@blender_version_wrapper('>=','2.80')
+def set_cursor_location(loc:tuple):
+    bpy.context.scene.cursor.location = loc
+
+
+@blender_version_wrapper('<=','2.79')
+def make_annotations(cls):
+    """Does nothing in Blender 2.79"""
+    return cls
+@blender_version_wrapper('>=','2.80')
+def make_annotations(cls):
+    """Converts class fields to annotations in Blender 2.8"""
+    bl_props = {k: v for k, v in cls.__dict__.items() if isinstance(v, tuple)}
+    if bl_props:
+        if '__annotations__' not in cls.__dict__:
+            setattr(cls, '__annotations__', {})
+        annotations = cls.__dict__['__annotations__']
+        for k, v in bl_props.items():
+            annotations[k] = v
+            delattr(cls, k)
+    return cls

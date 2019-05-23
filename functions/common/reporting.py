@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Christopher Gearhart
+# Copyright (C) 2019 Christopher Gearhart
 # chris@bblanimation.com
 # http://bblanimation.com/
 #
@@ -166,6 +166,10 @@ def bversion(short:bool=True):
     return bver_short if short else bver_long
 
 
+def b280():
+    return bpy.app.version >= (2,80,0)
+
+
 def writeErrorToFile(error_report_path:str, error_log:str, addon_version:str, github_path:str):
     # write error to log text object
     error_report_dir = os.path.dirname(error_report_path)
@@ -188,3 +192,4 @@ def writeErrorToFile(error_report_path:str, error_log:str, addon_version:str, gi
         f.write("\n" + error_log)
     except KeyError:
         f.write(" No exception found")
+    f.close()

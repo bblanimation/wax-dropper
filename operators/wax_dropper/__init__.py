@@ -239,7 +239,7 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
     def push_meta_to_wax(self):
         scn = bpy.context.scene
-        scn.update()
+        update_depsgraph()
         old_data = self.wax_obj.data
         self.wax_obj.data = self.meta_obj.to_mesh(scn, apply_modifiers=True, settings='PREVIEW')
         bpy.data.meshes.remove(old_data)
