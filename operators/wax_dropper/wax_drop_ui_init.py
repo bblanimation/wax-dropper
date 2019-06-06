@@ -31,6 +31,11 @@ from ...addon_common.common.ui import Drawing
 
 
 class WaxDrop_UI_Init():
+    
+    #Overridable to be able to insert new UI elements in subclases
+    def ui_init_post(self):
+        return
+    
     def ui_setup(self):
         # UI Box functionality
         def get_blobsize(): return self.wax_opts["blob_size"]
@@ -126,6 +131,8 @@ class WaxDrop_UI_Init():
         self.wax_surface_options.add_option("wax on wax")
         self.wax_surface_options.add_option("scene")
 
+        self.ui_init_post()
+        
     def set_ui_text(self):
         ''' sets the viewports text '''
         self.reset_ui_text()
