@@ -249,7 +249,16 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
     def fuse_and_continue(self):
         """ apply currently drawn wax to source object """
-        self.end_commit()
+        self.remove_meta_wax()
+        if self.wax_opts["action"] != "none":
+            # add/subtract wax object to/from source
+            jmod = self.source.modifiers.new('Join Wax', type='BOOLEAN')
+            jmod.operation = 'UNION' if self.wax_opts["action"] == 'add' else 'DIFFERENCE'
+            jmod.object = self.wax_obj
+            apply_modifiers(self.source)
+            self.remove_wax_blobs()
+            
+            
         self.wax_obj, self.meta_obj = self.make_wax_base()
         self.net_ui_context.update_bme()
         self.net_ui_context.update_bvh()
