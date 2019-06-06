@@ -1579,7 +1579,10 @@ class WaxDrop_UI_Tools():
         else:
             self.net_ui_context.hovered_near = [None, None]
 
-
+    #function to overwrite
+    def end_commit_post(self):
+        return
+    
     def end_commit(self):
         print('end commit')
         if self.net_ui_context.geometry_mode == 'DESTRUCTIVE':
@@ -1591,7 +1594,8 @@ class WaxDrop_UI_Tools():
             bpy.data.meshes.remove(del_data)
 
         self.net_ui_context.bme.free() #and other cleanup?
-
+        self.end_commit_post()
+        
     def end_cancel(self):
         print('end cancel')
         del_data = self.net_ui_context.ob.data  #remember we swapped the data at the init
