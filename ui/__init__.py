@@ -15,38 +15,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# System imports
-# NONE!
-
-# Blender imports
-import bpy
-from bpy.types import Panel
-
-
-class VIEW3D_PT_tools_wax_dropper(Panel):
-    bl_space_type  = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_label       = "Wax Dropper Interface"
-    bl_idname      = "VIEW3D_PT_tools_wax_dropper"
-    bl_context     = "objectmode"
-    bl_category    = "Wax Dropper"
-
-    @classmethod
-    def poll(self, context):
-        return True
-
-    def draw(self, context):
-        layout = self.layout
-        scn = context.scene
-
-        if bpy.data.texts.find('Addon Skeleton log') >= 0:
-            split = layout.split(align=True, percentage=0.9)
-            col = split.column(align=True)
-            row = col.row(align=True)
-            row.operator("scene.report_error", text="Report Error", icon="URL").addon_name = "Wax Dropper"
-            col = split.column(align=True)
-            row = col.row(align=True)
-            row.operator("scene.close_report_error", text="", icon="PANEL_CLOSE").addon_name = "Wax Dropper"
-
-        col = layout.column(align=True)
-        col.operator("object.wax_dropper")
+from .interface import *

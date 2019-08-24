@@ -15,11 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# System imports
-import bpy
-import math
-from bpy.app.handlers import persistent
+from .report_error import *
+from .preferences import *
+from ..ui import *
+from ..operators import *
 
-# @persistent
-# def handle_something(scn):
-#     pass
+classes = [
+    WAXDROP_PT_preferences,
+    VIEW3D_PT_tools_wax_dropper,
+    wax_dropper.OBJECT_OT_wax_dropper,
+]
