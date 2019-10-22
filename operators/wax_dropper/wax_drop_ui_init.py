@@ -59,7 +59,7 @@ class WaxDrop_UI_Init():
 
         def get_depth_offset(): return self.wax_opts["depth_offset"]
         def get_depth_offset_print(): return "%0.3f" % self.wax_opts["depth_offset"]
-        def set_depth_offset(v): self.wax_opts["depth_offset"] = round(min(max(-1.0, float(v)), 1.0), 5)
+        def set_depth_offset(v): self.wax_opts["depth_offset"] = round(min(max(-3.0, float(v)), 3.0), 5)
 
         def get_action(): return self.wax_opts["action"]
         def set_action(v): self.wax_opts["action"] = v
@@ -85,7 +85,10 @@ class WaxDrop_UI_Init():
             self.wax_opts["paint_radius"] = max(0.1, int(v*10)/10)
             if self.brush:
                 self.brush.radius = self.wax_opts["paint_radius"]
-
+                self.brush_density()
+                
+        def get_radius_print(): return "%0.3f" % self.wax_opts["paint_radius"]
+        
         #UPPER LEFT WINDOW, Sketch/Paint Mode
         #COMMIT/COMMIT and CONTINUE/COMMIT
         self.tools_panel = self.wm.create_window('Wax Dropper Tools', {'pos':7, 'movable':True, 'bgcolor':(0.50, 0.50, 0.50, 0.90)})
@@ -118,9 +121,10 @@ class WaxDrop_UI_Init():
         #self.ui_instructions = info.add(ui.UI_Markdown('test', min_size=(200,200)))
         self.options_frame = self.info_panel.add(ui.UI_Frame('Tool Options'))
         self.options_frame.add(ui.UI_Number("Size", get_blobsize, set_blobsize, fn_get_print_value=get_blobsize_print, fn_set_print_value=set_blobsize))
-        # opts.add(ui.UI_Number("Paint Radius", get_radius, set_radius, fn_get_print_value=get_radius_print, fn_set_print_value=set_radius))
-        self.options_frame.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_func=self.push_meta_to_wax, update_multiplier=0.05))
+        self.options_frame.add(ui.UI_Number("Paint Radius", radius_getter, radius_setter, fn_get_print_value=get_radius_print, fn_set_print_value = radius_setter))
         self.options_frame.add(ui.UI_Number("Depth Offset", get_depth_offset, set_depth_offset, update_multiplier=0.05))
+        self.options_frame.add(ui.UI_Number("Resolution", get_resolution, set_resolution, fn_get_print_value=get_resolution_print, fn_set_print_value=set_resolution, update_func=self.push_meta_to_wax, update_multiplier=0.05))
+        
         self.wax_action_options = self.options_frame.add(ui.UI_Options(get_action, set_action, label="Action: ", vertical=True))
         self.wax_action_options.add_option("add")
         self.wax_action_options.add_option("subtract")
