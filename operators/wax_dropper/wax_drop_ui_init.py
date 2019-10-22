@@ -22,7 +22,7 @@ import random
 # Blender imports
 from bpy_extras import view3d_utils
 
-# Addon imports
+# Module imports
 from .wax_drop_datastructure import InputPoint, SplineSegment, CurveNode
 from ...addon_common.cookiecutter.cookiecutter import CookieCutter
 from ...addon_common.common import ui

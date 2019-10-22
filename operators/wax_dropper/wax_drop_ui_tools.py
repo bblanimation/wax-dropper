@@ -27,7 +27,7 @@ from mathutils import Vector, kdtree, Color, Matrix
 from mathutils.geometry import intersect_point_line
 from mathutils.bvhtree import BVHTree
 
-# Addon imports
+# Module imports
 from .wax_drop_datastructure import InputNetwork, InputPoint, InputSegment, SplineSegment, CurveNode
 from ...functions import *
 from ...addon_common.common.utils import get_matrices

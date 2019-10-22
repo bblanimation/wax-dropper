@@ -25,7 +25,7 @@ from mathutils import Vector, Matrix
 from mathutils.geometry import intersect_line_line
 from bpy_extras import view3d_utils
 
-# Addon imports
+# Module imports
 from .wax_drop_datastructure import *
 from .wax_drop_ui_init import *
 from .wax_drop_ui_tools import *

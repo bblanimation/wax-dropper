@@ -29,7 +29,7 @@ from mathutils.bvhtree import BVHTree
 from mathutils.geometry import intersect_point_line, intersect_line_plane
 from bpy_extras import view3d_utils
 
-# Addon imports
+# Module imports
 from ...functions import *
 from ...addon_common.common.utils import get_matrices
 from ...addon_common.common.bezier import CubicBezier, CubicBezierSpline
