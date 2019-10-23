@@ -67,6 +67,8 @@ class WaxDrop_UI_Init():
         def get_surface_target(): return self.wax_opts["surface_target"]
         def set_surface_target(v): self.wax_opts["surface_target"] = v
 
+        def get_hard_commit(): return self.wax_opts["hard_commit"]
+        def set_hard_commit(v): self.wax_opts["hard_commit"] = v
         # instructions
         self.instructions = {
             "place wax": "Left-click on the mesh to add a new wax ball",
@@ -88,6 +90,11 @@ class WaxDrop_UI_Init():
                 self.brush_density()
                 
         def get_radius_print(): return "%0.3f" % self.wax_opts["paint_radius"]
+        
+        def toggle_hide():
+             for ob in self.unhidden_objects:
+                 ob.hide = ob.hide == False
+                 
         
         #UPPER LEFT WINDOW, Sketch/Paint Mode
         #COMMIT/COMMIT and CONTINUE/COMMIT
@@ -134,7 +141,10 @@ class WaxDrop_UI_Init():
         self.wax_surface_options.add_option("object")
         self.wax_surface_options.add_option("wax on wax")
         self.wax_surface_options.add_option("scene")
-
+        
+        self.hard_commit = self.options_frame.add(ui.UI_Checkbox2('Hard Commit', get_hard_commit, set_hard_commit))
+        self.options_frame.add(ui.UI_Button('Unhide', toggle_hide))
+        
         self.ui_init_post()
         
     def set_ui_text(self):

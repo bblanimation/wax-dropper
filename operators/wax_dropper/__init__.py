@@ -48,7 +48,8 @@ class WaxDropperOptions:
         "position": 9,
         "resolution":0.4,
         "surface_target": "object",  #object, object_wax
-    }
+        "hard_commit": True,
+        }
 
 
 class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDrop_States, CookieCutter):
@@ -118,14 +119,17 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
     def end_commit(self):
         """ Commit changes to mesh! """
-        self.remove_meta_wax()
+        
         if self.wax_opts["action"] != "none":
             # add/subtract wax object to/from source
             jmod = self.source.modifiers.new('Join Wax', type='BOOLEAN')
             jmod.operation = 'UNION' if self.wax_opts["action"] == 'add' else 'DIFFERENCE'
             jmod.object = self.wax_obj
-            apply_modifiers(self.source)
-            self.remove_wax_blobs()
+            
+            if self.wax_opts["hard_commit"]:
+                self.remove_meta_wax()
+                apply_modifiers(self.source)
+                self.remove_wax_blobs()
         self.end_commit_post()
 
     def end_cancel(self):

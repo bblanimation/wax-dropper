@@ -35,7 +35,7 @@ class WaxDrop_States():
 
     default_keymap = {
         "sketching":  {"LEFTMOUSE"},
-        "remove wax": {"SHIFT+LEFTMOUSE"},
+        "remove wax": {"RIGHTMOUSE"},
         "painting":   {"LEFTMOUSE"},
         "commit":     {"RET"},
         "cancel":     {"ESC"},
@@ -103,7 +103,7 @@ class WaxDrop_States():
                                                   error_threshold=0.1 * self.wax_opts["blob_size"])
         # add metaballs at uniformly spaced locs
         for loc in new_locs:
-            self.draw_wax(loc * self.meta_obj.matrix_world)
+            self.draw_wax(self.meta_obj.matrix_world.inverted() *loc)
 
         self.push_meta_to_wax()
         # reset the sketcher object for next time
