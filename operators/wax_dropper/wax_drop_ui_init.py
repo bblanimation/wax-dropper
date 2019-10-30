@@ -69,6 +69,10 @@ class WaxDrop_UI_Init():
 
         def get_hard_commit(): return self.wax_opts["hard_commit"]
         def set_hard_commit(v): self.wax_opts["hard_commit"] = v
+        
+        def get_make_new(): return self.wax_opts["make_new"]
+        def set_make_new(v): self.wax_opts["make_new"] = v
+        
         # instructions
         self.instructions = {
             "place wax": "Left-click on the mesh to add a new wax ball",
@@ -143,6 +147,7 @@ class WaxDrop_UI_Init():
         self.wax_surface_options.add_option("scene")
         
         self.hard_commit = self.options_frame.add(ui.UI_Checkbox2('Hard Commit', get_hard_commit, set_hard_commit))
+        self.make_new = self.options_frame.add(ui.UI_Checkbox2('Make New', get_make_new, set_make_new))
         self.options_frame.add(ui.UI_Button('Unhide', toggle_hide))
         
         self.ui_init_post()

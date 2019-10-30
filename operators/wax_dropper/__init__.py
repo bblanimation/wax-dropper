@@ -49,7 +49,7 @@ class WaxDropperOptions:
         "resolution":0.4,
         "surface_target": "object",  #object, object_wax
         "hard_commit": True,
-        }
+        "make_new": True}
 
 
 class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, WaxDrop_States, CookieCutter):
@@ -156,24 +156,41 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
     # class methods
 
     def make_wax_base(self):
+        
+        if self.wax_opts['make_new']:
+            meta_name = 'Meta Wax'
+            n = len([ob for ob in bpy.data.objects if 'Meta Wax' in ob.name])
+            meta_name = meta_name + '.' + str(1000 + n)[1:]  #this mimics the .001 .002 numbering convention
+            
+            
+            wax_name = 'Wax Blobs'
+            n = len([ob for ob in bpy.data.objects if wax_name in ob.name])
+            wax_name = wax_name + '.' + str(1000 + n)[1:] 
+        else:
+            meta_name = 'Meta Wax'
+            wax_name = 'Wax Blobs'
+            
+            
         scn = bpy.context.scene
-        if 'Meta Wax' in bpy.data.objects:
-            meta_obj = bpy.data.objects.get('Meta Wax')
+        if meta_name in bpy.data.objects:
+            meta_obj = bpy.data.objects.get(meta_name)
             meta_data = meta_obj.data
         else:
-            meta_data = bpy.data.metaballs.new('Meta Wax')
-            meta_obj = bpy.data.objects.new('Meta Wax', meta_data)
+            meta_data = bpy.data.metaballs.new(meta_name)
+            meta_obj = bpy.data.objects.new(meta_name, meta_data)
             meta_data.resolution = self.wax_opts['resolution']
             meta_data.render_resolution = 1
             scn.objects.link(meta_obj)
-        if 'Wax Blobs' not in bpy.data.objects:
-            wax_me = bpy.data.meshes.new('Wax Blobs')
-            wax_obj = bpy.data.objects.new('Wax Blobs', wax_me)
+        
+        
+        if wax_name not in bpy.data.objects:
+            wax_me = bpy.data.meshes.new(wax_name)
+            wax_obj = bpy.data.objects.new(wax_name, wax_me)
             scn.objects.link(wax_obj)
             smod = wax_obj.modifiers.new('Smooth', type = 'SMOOTH')
             smod.iterations = 10
         else:
-            wax_obj = bpy.data.objects.get('Wax Blobs')
+            wax_obj = bpy.data.objects.get(wax_name)
             wax_me = wax_obj.data
 
         meta_obj.hide = True
@@ -199,11 +216,16 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
         if result:
             if delete_wax:
-                if obj != self.wax_obj:
-                    return
+                mx = obj.matrix_world
+                print('DELETING WAX')
+                #if obj != self.wax_obj:  allow deletion
+                #    return
                 to_remove = []
+                print('Trying to delete wax')
                 for mb in self.meta_obj.data.elements:
-                    if (mb.co - loc).length < 1.5 * self.wax_opts["blob_size"]:
+                    
+                    Rmax = 1.5 * self.wax_opts["blob_size"] if self.brush == None else self.wax_opts["paint_radius"] + self.wax_opts["blob_size"]
+                    if (mx * mb.co - loc).length < Rmax:
                         to_remove.append(mb)
                 # closest_mb = min(self.meta_obj.data.elements, key = lambda x: (x.co - loc).length)
                 # self.meta_obj.data.elements.remove(closest_mb)
@@ -243,6 +265,8 @@ class OBJECT_OT_wax_dropper(WaxDrop_UI_Init, WaxDrop_UI_Draw, WaxDrop_UI_Tools, 
 
     def push_meta_to_wax(self):
         scn = bpy.context.scene
+        print(self.wax_obj)
+        print(self.wax_obj.data)
         update_depsgraph()
         old_data = self.wax_obj.data
         self.wax_obj.data = self.meta_obj.to_mesh(scn, apply_modifiers=True, settings='PREVIEW')
